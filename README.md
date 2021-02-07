@@ -1,25 +1,20 @@
 # myportfolio
-Portfolio for Computational Musicology
 
-**Corpus**
-- How has my taste in music changed over the past three years? I will use my bi-monthly playlists from May 2018 until February 2021 as the corpus.
-- How average was my taste in music in 2020? I will compare my personal Top Tracks to the NL Top Tracks.
-- How average was my taste in music in 2020 versus 2019? I will compare my personal Top Tracks of 2019 to the NL Top Tracks of 2019, and the same for 2020. Then, I will compare these comparisons. My hypothesis is that my taste in music was *less* average in 2020 because I did not listen to any music in social situations (hanging with friends, working out at the gym, partying/clubbing, etc.) due to the Covid situation.
-- Which country's Top Tracks of 2020 fits my personal Top Tracks of 2020 best, and why? I will compare my personal Top Tracks to the Top Tracks of several different countries.
+**Portfolio for Computational Musicology**
 
-**Groups for comparison**
+The corpus I am going to analyze consists of four playlists: my Top Tracks of 2019, my Top Tracks of 2020, the Top Tracks NL of 2019 and the Top Tracks NL of 2020. These playlists are respectively representative of the following groups I will be comparing: my taste in music in 2019, my taste in music in 2020, the average Dutch taste in music in 2019, and the average Dutch taste in music in 2020.
+In this portfolio, I want to find an answer to the following questions:
+1. How did my taste in music in 2020 differ from 2019? (comparison between group 1 and 2)
+2. How did the average Dutch taste in music in 2020 differ from 2019? (comparison between group 3 and 4)
+3. How average was my taste in music in 2019? (comparison between group 1 and 3)
+4. How average was my taste in music in 2020? (comparison between group 2 and 4)
 
-**Measures**
-1. genres
-2. artists
-3. popularity
-4. danceability
-5. energy
-6. instrumentalness
-7. key
-8. liveness
-9. mode
-10. speechiness
-11. tempo
-12. valence
-13. track(s) (of a playlist)
+I find it very interesting to analyze these comparisons, especially in light of the coronavirus pandemic. Due to the social distancing measures I did not listen to music in any social setting, such as hanging out with friends, clubbing, or even working out at the gym. My hypothesis is that my taste in music was therefore *less* average in 2020 than it was in 2019.
+
+Evidently, my corpus is representative for the groups I want to compare, because it actually consists of those groups. However, I do have to remark that a Top Tracks playlist might not be representative of 'the average'. It just contains those tracks that were listened to most often. On the same note, I do not have a premium Spotify account, which means I do not often skip a song and most playlists are on shuffle. It might just be that a song was eligible as Top Track because it was in a playlist I listened to a lot, not because I liked that song so much.
+
+For example, *Stuck with U* by Ariana Grande and Justin Bieber is one of my Top Tracks of 2020. It used to be in a lot of different playlists I listened to at the time. And yes, I liked that song, but nevertheless, I am fairly sure there were other songs I liked more in 2020 that did not appear in that playlist. I definitely consider this song atypical for the group 'my taste in music in 2020'.
+
+On the other hand, a song I consider very typical for my taste in music in 2019 is *Drive and Disconnect* by Nao. I remember listening to this song on repeat when I discovered it, but also for a longer time after that. And even a few months later I rediscovered this song, and the flame was rekindled.
+
+While browsing the API Reference, I found the following variables that seem interesting to analyze: genres, artists, popularity, danceability, energy, valence, speechiness, instrumentalness, key, mode, tempo.
