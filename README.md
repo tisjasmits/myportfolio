@@ -1,6 +1,4 @@
-# myportfolio
-
-**Portfolio for Computational Musicology**
+# Portfolio for Computational Musicology
 
 The corpus I am going to analyze consists of four playlists: my Top Tracks of 2019, my Top Tracks of 2020, the Top Tracks NL of 2019 and the Top Tracks NL of 2020. These playlists are respectively representative of the following groups I will be comparing: my taste in music in 2019, my taste in music in 2020, the average Dutch taste in music in 2019, and the average Dutch taste in music in 2020.
 In this portfolio, I want to find an answer to the following questions:
