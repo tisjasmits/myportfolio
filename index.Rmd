@@ -1,13 +1,17 @@
 ---
 title: "Portfolio for Computational Musicology"
 author: "Tisja Smits"
-date: "9-2-2021"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(spotifyr)
 ```
+
+## Week 5
 
 The corpus I am going to analyze consists of four playlists: my Top Tracks of 2019, my Top Tracks of 2020, the Top Tracks NL of 2019 and the Top Tracks NL of 2020. These playlists are respectively representative of the following groups I will be comparing: my taste in music in 2019, my taste in music in 2020, the average Dutch taste in music in 2019, and the average Dutch taste in music in 2020.
 In this portfolio, I want to find an answer to the following questions:
@@ -25,3 +29,149 @@ For example, *Stuck with U* by Ariana Grande and Justin Bieber is one of my Top 
 On the other hand, a song I consider very typical for my taste in music in 2019 is *Drive and Disconnect* by Nao. I remember listening to this song on repeat when I discovered it, but also for a longer time after that. And even a few months later I rediscovered this song, and the flame was rekindled.
 
 While browsing the API Reference, I found the following variables that seem interesting to analyze: genres, artists, popularity, danceability, energy, valence, speechiness, instrumentalness, key, mode, tempo.
+
+#### Feedback
+- Can Top Tracks NL be considered average? Which demographic contributes most to the creation of the playlist? And do I belong to that demographic?
+- With my free account, Spotify might be biasing my taste in music by making me listen to certain (sponsored?) songs (such as that Ariana Grande song).
+- Will the fact that I cannot skip (many) songs influence the comparison scores?
+- How many songs are in each of the playlists?
+
+
+
+## Week 6
+
+```{r toptracks table, echo=FALSE}
+NL2020 <- get_playlist_audio_features("", "37i9dQZF1DWU7JsJYlV18s")
+my2020 <- get_playlist_audio_features("", "37i9dQZF1ELZX0wn2u2RJw")
+NL2019 <- get_playlist_audio_features("", "37i9dQZF1DX24O9ZrSq8yt")
+my2019 <- get_playlist_audio_features("", "37i9dQZF1Etf5utVpuKPi7")
+
+toptracks <-
+  bind_rows(
+    NL2020 %>% mutate(playlist = "NL 2020"),
+    my2020 %>% mutate(playlist = "My 2020"),
+    NL2019 %>% mutate(playlist = "NL 2019"),
+    my2019 %>% mutate(playlist = "My 2019")
+  )
+  # %>% mutate(mode = ifelse(mode == 0, "minor", "major"))
+
+```
+
+```{r toptracks plot, include=FALSE}
+ggplot(toptracks,
+       aes(
+         x = valence,
+         y = energy,
+         color = mode
+       )
+      ) +
+  geom_point() +              # Scatter plot.
+  #geom_point(summarise_all(toptracks, mean), shape = 15)
+  geom_rug(size = 0.1) +      # Add 'fringes' to show data distribution.
+  facet_wrap(~playlist) +     # Separate charts per mode
+  theme_light()               # Use a simpler theme.
+
+ggplot(toptracks,
+       aes(
+         x = tempo,
+         y = danceability,
+         color = mode
+       )
+      ) +
+  geom_point() +              # Scatter plot.
+  #geom_point(summarise_all(toptracks, mean), shape = 15)
+  geom_rug(size = 0.1) +      # Add 'fringes' to show data distribution.
+  facet_wrap(~playlist) +     # Separate charts per mode
+  theme_light()               # Use a simpler theme.
+```
+
+The following violin plots show the distribution of energy, valence and danceability, respectively, along the four chosen playlists.
+
+```{r, echo=FALSE}
+ggplot(toptracks,
+    aes(
+      x = playlist,
+      y = energy,          # Interestingly different
+      color = playlist
+    )
+  ) +
+  geom_violin(trim=FALSE) +
+  #scale_y_continuous(limits=c(0,1)) +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  labs(
+    x = "Playlist",
+    y = "Energy"
+  )
+
+ggplot(toptracks,
+    aes(
+      x = playlist,
+      y = valence,        # Interestingly similar
+      color = playlist
+    )
+  ) +
+  geom_violin(trim=FALSE) +
+  #scale_y_continuous(limits=c(0,1)) +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  labs(
+    x = "Playlist",
+    y = "Valence"
+  )
+
+ggplot(toptracks,
+    aes(
+      x = playlist,
+      y = danceability,    # Taste more average in 2020 than in 2019?
+      color = playlist
+    )
+  ) +
+  geom_violin(trim=FALSE) +
+  #scale_y_continuous(limits=c(0,1)) +
+  theme_minimal() +
+  theme(legend.position = "none") +
+  labs(
+    x = "Playlist",
+    y = "Danceability"
+  )
+```
+
+
+```{r, include=FALSE}
+ggplot(toptracks,
+    aes(
+      x = playlist,
+      fill = mode
+    )
+  ) +
+  geom_bar(position = "fill") +
+  theme_light()
+
+ggplot(toptracks,
+    aes(
+      x = playlist,
+      y = speechiness
+    )
+  ) +
+  geom_violin() +
+  theme_light()
+
+ggplot(toptracks,
+    aes(
+      x = playlist,
+      y = acousticness
+    )
+  ) +
+  geom_violin() +
+  theme_light()
+
+ggplot(toptracks,
+    aes(
+      x = playlist,
+      y = tempo
+    )
+  ) +
+  geom_violin() +
+  theme_light()
+```
