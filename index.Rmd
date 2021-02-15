@@ -87,7 +87,7 @@ ggplot(toptracks,
 
 The following violin plots show the distribution of energy, valence and danceability, respectively, along the four chosen playlists.
 
-```{r, echo=FALSE}
+```{r energy violin plot, echo=FALSE}
 ggplot(toptracks,
     aes(
       x = playlist,
@@ -96,6 +96,8 @@ ggplot(toptracks,
     )
   ) +
   geom_violin(trim=FALSE) +
+  stat_summary(fun.y=mean, geom="point", shape=16, size=4) +
+  #geom_boxplot(width=0.1) +
   #scale_y_continuous(limits=c(0,1)) +
   theme_minimal() +
   theme(legend.position = "none") +
@@ -103,7 +105,11 @@ ggplot(toptracks,
     x = "Playlist",
     y = "Energy"
   )
+```
 
+The violin plot above shows that, with respect to the energy level, my taste in music has remained very constant. In both My Top Tracks of 2019 and Top Tracks NL of 2019, there is a bump around 0.7. They also spread out downward quite equally. This, however, was not the case in 2020; energy was *lower* on average and more spread out, though with a small bump *higher* than the bumps of the other playlists. Thus, Top Tracks NL 2019 is more similar to my Top Tracks playlists than Top Tracks NL 2020, with respect to the energy level that is.
+
+```{r valence violin plot, echo=FALSE}
 ggplot(toptracks,
     aes(
       x = playlist,
@@ -112,6 +118,8 @@ ggplot(toptracks,
     )
   ) +
   geom_violin(trim=FALSE) +
+  stat_summary(fun.y=mean, geom="point", shape=16, size=4) +
+  #geom_boxplot(width=0.1) +
   #scale_y_continuous(limits=c(0,1)) +
   theme_minimal() +
   theme(legend.position = "none") +
@@ -119,7 +127,11 @@ ggplot(toptracks,
     x = "Playlist",
     y = "Valence"
   )
+```
 
+The violin plot above shows that, with respect to the valence level, my taste in music has remained fairly constant, although valence was more spread out in My Top Tracks of 2020 than in My Top Tracks of 2019. Interestingly, valence in Top Tracks NL 2019 is very nicely and equally distributed, unlike Top Tracks NL 2020. In fact, Top Tracks NL 2020 seems to have the inverted valence distribution of my Top Tracks playlists.
+
+```{r danceability violin plot, echo=FALSE}
 ggplot(toptracks,
     aes(
       x = playlist,
@@ -128,6 +140,8 @@ ggplot(toptracks,
     )
   ) +
   geom_violin(trim=FALSE) +
+  stat_summary(fun.y=mean, geom="point", shape=16, size=4) +
+  #geom_boxplot(width=0.1) +
   #scale_y_continuous(limits=c(0,1)) +
   theme_minimal() +
   theme(legend.position = "none") +
@@ -137,6 +151,7 @@ ggplot(toptracks,
   )
 ```
 
+The violin plot above shows that, with respect to the danceability level, my taste in music has remained somewhat constant, with the bumps of My Top Tracks of 2019 and My Top Tracks of 2020 both at around 0.75. Unlike in the plots above, this plot shows that, with respect to danceability, playlists are more similar when grouping by year than they are when grouping by 'personal versus NL'. Not only the shapes look more similar, the mean dancibilities seem to follow the same trend as well; the mean dancibility was slightly lower in 2020 than in 2019. This could be explained by the fact that, due to social distancing measures, there were less occasions to dance. As a result, artists also made less music *to dance to*.
 
 ```{r, include=FALSE}
 ggplot(toptracks,
