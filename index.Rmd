@@ -4,7 +4,7 @@ author: "Tisja Smits"
 output: 
     flexdashboard::flex_dashboard:
         storyboard: true
-        #theme: flatly
+        theme: flatly
 ---
 
 ```{r setup, include=FALSE}
@@ -34,12 +34,13 @@ On the other hand, a song I consider very typical for my taste in music in 2019 
 
 While browsing the API Reference, I found the following variables that seem interesting to analyze: genres, artists, popularity, danceability, energy, valence, speechiness, instrumentalness, key, mode, tempo.
 
-*** Feedback
+***
+Feedback
 - Can Top Tracks NL be considered average? Which demographic contributes most to the creation of the playlist? And do I belong to that demographic?
 - With my free account, Spotify might be biasing my taste in music by making me listen to certain (sponsored?) songs (such as that Ariana Grande song).
 - Will the fact that I cannot skip (many) songs influence the comparison scores?
 - How many songs are in each of the playlists?
-
+***
 
 
 ### Week 6
@@ -89,8 +90,6 @@ ggplot(toptracks,
   theme_light()               # Use a simpler theme.
 ```
 
-The following violin plots show the distribution of energy, valence and danceability, respectively, along the four chosen playlists.
-
 ```{r energy violin plot, echo=FALSE}
 ggplot(toptracks,
     aes(
@@ -110,8 +109,6 @@ ggplot(toptracks,
     y = "Energy"
   )
 ```
-
-The violin plot above shows that, with respect to the energy level, my taste in music has remained very constant. In both My Top Tracks of 2019 and Top Tracks NL of 2019, there is a bump around 0.7. They also spread out downward quite equally. This, however, was not the case in 2020; energy was *lower* on average and more spread out, though with a small bump *higher* than the bumps of the other playlists. Thus, Top Tracks NL 2019 is more similar to my Top Tracks playlists than Top Tracks NL 2020, with respect to the energy level that is.
 
 ```{r valence violin plot, echo=FALSE}
 ggplot(toptracks,
@@ -133,8 +130,6 @@ ggplot(toptracks,
   )
 ```
 
-The violin plot above shows that, with respect to the valence level, my taste in music has remained fairly constant, although valence was more spread out in My Top Tracks of 2020 than in My Top Tracks of 2019. Interestingly, valence in Top Tracks NL 2019 is very nicely and equally distributed, unlike Top Tracks NL 2020. In fact, Top Tracks NL 2020 seems to have the inverted valence distribution of my Top Tracks playlists.
-
 ```{r danceability violin plot, echo=FALSE}
 ggplot(toptracks,
     aes(
@@ -155,7 +150,15 @@ ggplot(toptracks,
   )
 ```
 
-The violin plot above shows that, with respect to the danceability level, my taste in music has remained somewhat constant, with the bumps of My Top Tracks of 2019 and My Top Tracks of 2020 both at around 0.75. Unlike in the plots above, this plot shows that, with respect to danceability, playlists are more similar when grouping by year than they are when grouping by 'personal versus NL'. Not only the shapes look more similar, the mean dancibilities seem to follow the same trend as well; the mean dancibility was slightly lower in 2020 than in 2019. This could be explained by the fact that, due to social distancing measures, there were less occasions to dance. As a result, artists also made less music *to dance to*.
+***
+The following violin plots show the distribution of energy, valence and danceability, respectively, along the four chosen playlists.
+
+The first violin plot shows that, with respect to the energy level, my taste in music has remained very constant. In both My Top Tracks of 2019 and Top Tracks NL of 2019, there is a bump around 0.7. They also spread out downward quite equally. This, however, was not the case in 2020; energy was *lower* on average and more spread out, though with a small bump *higher* than the bumps of the other playlists. Thus, Top Tracks NL 2019 is more similar to my Top Tracks playlists than Top Tracks NL 2020, with respect to the energy level that is.
+
+The second violin plot shows that, with respect to the valence level, my taste in music has remained fairly constant, although valence was more spread out in My Top Tracks of 2020 than in My Top Tracks of 2019. Interestingly, valence in Top Tracks NL 2019 is very nicely and equally distributed, unlike Top Tracks NL 2020. In fact, Top Tracks NL 2020 seems to have the inverted valence distribution of my Top Tracks playlists.
+
+The third violin plot shows that, with respect to the danceability level, my taste in music has remained somewhat constant, with the bumps of My Top Tracks of 2019 and My Top Tracks of 2020 both at around 0.75. Unlike in the plots above, this plot shows that, with respect to danceability, playlists are more similar when grouping by year than they are when grouping by 'personal versus NL'. Not only the shapes look more similar, the mean dancibilities seem to follow the same trend as well; the mean dancibility was slightly lower in 2020 than in 2019. This could be explained by the fact that, due to social distancing measures, there were less occasions to dance. As a result, artists also made less music *to dance to*.
+
 
 ```{r, include=FALSE}
 ggplot(toptracks,
@@ -194,3 +197,11 @@ ggplot(toptracks,
   geom_violin() +
   theme_light()
 ```
+
+
+
+
+### Week 7
+
+
+
