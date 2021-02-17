@@ -1,7 +1,10 @@
 ---
 title: "Portfolio for Computational Musicology"
 author: "Tisja Smits"
-output: html_document
+output: 
+    flexdashboard::flex_dashboard:
+        storyboard: true
+        #theme: flatly
 ---
 
 ```{r setup, include=FALSE}
@@ -9,9 +12,10 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
 library(spotifyr)
+library(compmus)
 ```
 
-## Week 5
+### Week 5
 
 The corpus I am going to analyze consists of four playlists: my Top Tracks of 2019, my Top Tracks of 2020, the Top Tracks NL of 2019 and the Top Tracks NL of 2020. These playlists are respectively representative of the following groups I will be comparing: my taste in music in 2019, my taste in music in 2020, the average Dutch taste in music in 2019, and the average Dutch taste in music in 2020.
 In this portfolio, I want to find an answer to the following questions:
@@ -30,7 +34,7 @@ On the other hand, a song I consider very typical for my taste in music in 2019 
 
 While browsing the API Reference, I found the following variables that seem interesting to analyze: genres, artists, popularity, danceability, energy, valence, speechiness, instrumentalness, key, mode, tempo.
 
-#### Feedback
+*** Feedback
 - Can Top Tracks NL be considered average? Which demographic contributes most to the creation of the playlist? And do I belong to that demographic?
 - With my free account, Spotify might be biasing my taste in music by making me listen to certain (sponsored?) songs (such as that Ariana Grande song).
 - Will the fact that I cannot skip (many) songs influence the comparison scores?
@@ -38,7 +42,7 @@ While browsing the API Reference, I found the following variables that seem inte
 
 
 
-## Week 6
+### Week 6
 
 ```{r toptracks table, echo=FALSE}
 NL2020 <- get_playlist_audio_features("", "37i9dQZF1DWU7JsJYlV18s")
