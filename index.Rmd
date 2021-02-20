@@ -4,7 +4,7 @@ author: "Tisja Smits"
 output: 
     flexdashboard::flex_dashboard:
         storyboard: true
-        theme: flatly
+        theme: journal
 ---
 
 ```{r setup, include=FALSE}
@@ -13,6 +13,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(spotifyr)
 library(compmus)
+library(flexdashboard)
+library(plotly)
 ```
 
 ### Week 5
@@ -91,7 +93,7 @@ ggplot(toptracks,
 ```
 
 ```{r energy violin plot, echo=FALSE}
-ggplot(toptracks,
+energy_violin <- ggplot(toptracks,
     aes(
       x = playlist,
       y = energy,          # Interestingly different
@@ -108,10 +110,11 @@ ggplot(toptracks,
     x = "Playlist",
     y = "Energy"
   )
+ggplotly(energy_violin)
 ```
 
 ```{r valence violin plot, echo=FALSE}
-ggplot(toptracks,
+valence_violin <- ggplot(toptracks,
     aes(
       x = playlist,
       y = valence,        # Interestingly similar
@@ -128,10 +131,11 @@ ggplot(toptracks,
     x = "Playlist",
     y = "Valence"
   )
+ggplotly(valence_violin)
 ```
 
 ```{r danceability violin plot, echo=FALSE}
-ggplot(toptracks,
+danceability_violin <- ggplot(toptracks,
     aes(
       x = playlist,
       y = danceability,    # Taste more average in 2020 than in 2019?
@@ -148,6 +152,7 @@ ggplot(toptracks,
     x = "Playlist",
     y = "Danceability"
   )
+ggplotly(danceability_violin)
 ```
 
 ***
