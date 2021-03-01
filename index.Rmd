@@ -19,6 +19,222 @@ library(plotly)
 
 
 
+### Outlier grams
+```{r gram setup, echo=FALSE}
+# Sober: 7iHAue5izVmII1Z6Q1xy7B
+# Sweetie Odo: 2UAl2nzSixQviGw0XJvJgY
+sweetie <-
+  get_tidy_audio_analysis("2UAl2nzSixQviGw0XJvJgY") %>%  # Change URI.
+  compmus_align(bars, segments) %>%                      # Change `bars`
+  select(bars) %>%                                       #   in all three
+  unnest(bars) %>%                                       #   of these lines.
+  mutate(
+    pitches =
+      map(segments,
+        compmus_summarise, pitches,
+        method = "mean", norm = "euclidean"              # Change summary & norm.
+      )
+  ) %>%
+  mutate(
+    timbre =
+      map(segments,
+        compmus_summarise, timbre,
+        method = "rms", norm = "euclidean"               # Change summary & norm.
+      )
+  )
+sweetie_sec <-
+  get_tidy_audio_analysis("2UAl2nzSixQviGw0XJvJgY") %>%  # Change URI.
+  compmus_align(sections, segments) %>%                      # Change `bars`
+  select(sections) %>%                                       #   in all three
+  unnest(sections) %>%                                       #   of these lines.
+  mutate(
+    pitches =
+      map(segments,
+        compmus_summarise, pitches,
+        method = "mean", norm = "euclidean"              # Change summary & norm.
+      )
+  ) %>%
+  mutate(
+    timbre =
+      map(segments,
+        compmus_summarise, timbre,
+        method = "rms", norm = "euclidean"               # Change summary & norm.
+      )
+  )
+```
+
+#### Chromagrams
+```{r chromagrams sections and bars, include=FALSE}
+sweetie_sec %>%
+  compmus_gather_chroma() %>%
+  ggplot(
+    aes(
+      x = start + duration / 2,
+      width = duration,
+      y = pitch_class,
+      fill = value
+    )
+  ) +
+  geom_tile() +
+  labs(x = "Time (s)", y = NULL, fill = "Magnitude") +
+  scale_x_continuous(breaks=seq(0,155,30)) +
+  scale_fill_viridis_c(guide = "none", option = "inferno") +
+  theme_classic()
+
+sweetie %>%
+  compmus_gather_chroma() %>%
+  ggplot(
+    aes(
+      x = start + duration / 2,
+      width = duration,
+      y = pitch_class,
+      fill = value
+    )
+  ) +
+  geom_tile() +
+  labs(x = "Time (s)", y = NULL, fill = "Magnitude") +
+  scale_x_continuous(breaks=seq(0,155,30)) +
+  scale_fill_viridis_c(guide = "none", option = "inferno") +
+  theme_classic()
+```
+
+```{r chromagrams, echo=FALSE}
+bind_rows(
+  sweetie %>% 
+    compmus_gather_chroma() %>% 
+    mutate(type = "Bars"),
+  sweetie_sec %>% 
+    compmus_gather_chroma() %>% 
+    mutate(type = "Sections")
+) %>%
+  mutate() %>%
+  ggplot(
+    aes(
+      x = start + duration / 2,
+      width = duration,
+      y = pitch_class,
+      fill = value
+    )
+  ) +
+  geom_tile() +
+  labs(x = "Time (s)", y = NULL, fill = "Magnitude") +
+  scale_x_continuous(breaks=seq(0,155,30)) +
+  scale_fill_viridis_c(guide = "none", option = "inferno") +
+  facet_wrap(~type) +
+  theme_classic() +
+  labs(x = "", y = "")
+```
+
+***
+The plot on the left shows the chromagram of "Sweetie Odo" by Juls and Sway Clarke. This was a typical Top Track of mine in 2020. You can clearly see the repetitive chord progression throughout the song --the skips from C to A to G. The sections chromagram clearly shows 'blocks' at D and G. The D-blocks represent the chorus vocals and the C-block represents the vocals in the bridge.
+
+
+#### Cepstograms
+```{r cepstograms sections and bars, include=FALSE}
+sweetie_sec %>%
+  compmus_gather_timbre() %>%
+  ggplot(
+    aes(
+      x = start + duration / 2,
+      width = duration,
+      y = basis,
+      fill = value
+    )
+  ) +
+  geom_tile() +
+  labs(x = "Time (s)", y = NULL, fill = "Magnitude") +
+  scale_x_continuous(breaks=seq(0,155,30)) +
+  scale_fill_viridis_c(guide = "none", option = "inferno") +
+  theme_classic()
+
+sweetie %>%
+  compmus_gather_timbre() %>%
+  ggplot(
+    aes(
+      x = start + duration / 2,
+      width = duration,
+      y = basis,
+      fill = value
+    )
+  ) +
+  geom_tile() +
+  labs(x = "Time (s)", y = NULL, fill = "Magnitude") +
+  scale_x_continuous(breaks=seq(0,155,30)) +
+  scale_fill_viridis_c(guide = "none", option = "inferno") +
+  theme_classic()
+```
+
+```{r cepstograms, echo=FALSE}
+bind_rows(
+  sweetie %>% 
+    compmus_gather_timbre() %>% 
+    mutate(type = "Bars"),
+  sweetie_sec %>% 
+    compmus_gather_timbre() %>% 
+    mutate(type = "Sections")
+) %>%
+  mutate() %>%
+  ggplot(
+    aes(
+      x = start + duration / 2,
+      width = duration,
+      y = basis,
+      fill = value
+    )
+  ) +
+  geom_tile() +
+  labs(x = "Time (s)", y = NULL, fill = "Magnitude") +
+  scale_x_continuous(breaks=seq(0,155,30)) +
+  scale_fill_viridis_c(guide = "none", option = "inferno") +
+  facet_wrap(~type) +
+  theme_classic() +
+  labs(x = "", y = "")
+```
+
+***
+The plot on the left shows the cepstogram of "Sweetie Odo" by Juls and Sway Clarke. This was a typical Top Track of mine in 2020. You can clearly see the intro and outro in c03. It is interesting to see that nothing much happens in c02.
+
+
+
+
+### Outlier self-similarity matrices
+```{r self-similarity matrices, echo=FALSE}
+bind_rows(
+  sweetie %>%
+    compmus_self_similarity(pitches, "aitchison") %>%
+    mutate(d = d / max(d), type = "Chroma"),
+  sweetie %>%
+    compmus_self_similarity(timbre, "euclidean") %>%
+    mutate(d = d / max(d), type = "Timbre")
+) %>%
+  mutate() %>%
+  ggplot(
+    aes(
+      x = xstart + xduration / 2,
+      width = xduration,
+      y = ystart + yduration / 2,
+      height = yduration,
+      fill = d
+    )
+  ) +
+  scale_x_continuous(breaks=seq(0,155,30)) +
+  scale_y_continuous(breaks=seq(0,155,30)) +
+  geom_tile() +
+  coord_fixed() +
+  facet_wrap(~type) +
+  scale_fill_viridis_c(guide = "none", option = "inferno") +
+  theme_classic() +
+  labs(x = "", y = "")
+```
+
+
+
+
+<!-- deze volgorde aanpassen -->
+
+
+
+
 ### Just an average girl?
 
 The corpus I am going to analyze consists of four playlists: my Top Tracks of 2019, my Top Tracks of 2020, the Top Tracks NL of 2019 and the Top Tracks NL of 2020. These playlists are respectively representative of the following groups I will be comparing: my taste in music in 2019, my taste in music in 2020, the average Dutch taste in music in 2019, and the average Dutch taste in music in 2020.
@@ -86,10 +302,10 @@ mood_scatter <- ggplot(toptracks,
     x = "Valence",
     y = "Energy"
   ) +
-  theme_light() +               # Use a simpler theme.
-  theme(
-    legend.position = "none"
-    )
+  theme_light() #+               # Use a simpler theme.
+  # theme(
+  #   legend.position = "none"
+  #   )
 ggplotly(mood_scatter)
 ```
 
@@ -111,10 +327,10 @@ dance_scatter <- ggplot(toptracks,
     x = "Tempo",
     y = "Danceability"
   ) +
-  theme_light() +               # Use a simpler theme.
-  theme(
-    legend.position = "none"
-    )
+  theme_light() #+               # Use a simpler theme.
+  # theme(
+  #   legend.position = "none"
+  #   )
 ggplotly(dance_scatter)
 ```
 
@@ -125,7 +341,7 @@ ggplotly(dance_scatter)
 
 The variables that actually are interesting to discuss:
 
-**valence versus energy**
+#### valence versus energy
 
 (From a violin plot not shown in this storyboard)
 
@@ -133,7 +349,7 @@ The variables that actually are interesting to discuss:
 
 - Energy: In both My Top Tracks of 2019 and Top Tracks NL of 2019, there is a bump around 0.7. They also spread out downward quite equally. Top Tracks NL 2020 seems to be the odd one out (again); energy was *lower* on average and more spread out, though with a small bump *higher* than the bumps of the other playlists.
 
-**tempo versus danceability**
+#### tempo versus danceability
 
 - Tempo in 2019 was pretty much the same in both categories, both spiking at 100 bpm. My 2020 had a higer spike at 105 bpm. NL 2020 is totally different form the rest, with no real spikes, more spread out to lower (90) and higher (120) bpm's.
 
@@ -141,13 +357,11 @@ The variables that actually are interesting to discuss:
 
 - Danceability: My taste in music has remained somewhat constant, with the bumps of My Top Tracks of 2019 and My Top Tracks of 2020 both at around 0.75, though the overall distribution is more spread out in 2020. Unlike the other plots, this plot shows that, with respect to danceability, playlists are more similar when grouping by year than they are when grouping by category (personal versus NL). Not only the shapes look more similar, the mean dancibilities seem to follow the same trend as well; the mean dancibility was slightly lower in 2020 than in 2019. This could be explained by the fact that, due to social distancing measures, there were less occasions to dance. As a result, artists also made less music *to dance to*.
 
-**mode**
+#### mode
 
 (From a bar plot not shown in this storyboard)
 
 - Mode: In both Top Tracks NL the ratio major versus minor is almost 50/50. My Top Tracks count more minor, with a 40/60 ratio.
-
-<!-- **track.popularity** -->
 
 
 
@@ -184,35 +398,8 @@ The outlier of My 2019 is "Sober - Stripped" by Raye.
 The outliers of 2020 are "So Pra Mim (Acoustic)" by Sarita and "Only Wanna Be With You - Unplugged" by Samm Henshaw.
 
 
-### Outlier chromagram
 
-```{r chromagram, echo=FALSE}
-sober <-
-  get_tidy_audio_analysis("7iHAue5izVmII1Z6Q1xy7B") %>%
-  select(segments) %>%
-  unnest(segments) %>%
-  select(start, duration, pitches)
 
-sober %>%
-  mutate(pitches = map(pitches, compmus_normalise, "euclidean")) %>%
-  compmus_gather_chroma() %>% 
-  ggplot(
-    aes(
-      x = start + duration / 2,
-      width = duration,
-      y = pitch_class,
-      fill = value
-    )
-  ) +
-  geom_tile() +
-  labs(x = "Time (s)", y = NULL, fill = "Magnitude") +
-  # xlim(15,25) +           use this if you want other time limits for the chromagram 
-  theme_minimal() +
-  scale_fill_viridis_c()
-```
-
-***
-The plot on the left shows the chromagram of "Sober - Stripped" by Raye. This was an energy-outlier of my Top Tracks of 2019. I don't think this chromatogram is really informative for my corpus research, so I will probably not include it in my final portfolio.
 
 
 
@@ -236,7 +423,7 @@ toptracks50 <-
 # }
 ```
 
-<!-- Dat visualization: -->
+<!-- Data visualization: -->
 <!-- - https://rkabacoff.github.io/datavis/Time.html#dummbbell-charts -->
 <!-- - spider chart: https://www.r-graph-gallery.com/spider-or-radar-chart.html -->
 <!-- - circular barplot: https://www.r-graph-gallery.com/circular-barplot.html -->
