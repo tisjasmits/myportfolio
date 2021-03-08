@@ -15,17 +15,18 @@ library(spotifyr)
 library(compmus)
 library(flexdashboard)
 library(plotly)
+library(gridExtra)
 ```
 
 ```{r toptracks setup}
 NL2020 <- get_playlist_audio_features("", "37i9dQZF1DWU7JsJYlV18s") %>% 
-  mutate(playlist = "NL 2020", year = 2020, category = "NL Top Tracks")
+  mutate(playlist = "NL 2020", year = "2020", category = "NL Top Tracks")
 my2020 <- get_playlist_audio_features("", "37i9dQZF1ELZX0wn2u2RJw") %>% 
-  mutate(playlist = "My 2020", year = 2020, category = "My Top Tracks")
+  mutate(playlist = "My 2020", year = "2020", category = "My Top Tracks")
 NL2019 <- get_playlist_audio_features("", "37i9dQZF1DX24O9ZrSq8yt") %>% 
-  mutate(playlist = "NL 2019", year = 2019, category = "NL Top Tracks")
+  mutate(playlist = "NL 2019", year = "2019", category = "NL Top Tracks")
 my2019 <- get_playlist_audio_features("", "37i9dQZF1Etf5utVpuKPi7")  %>% 
-  mutate(playlist = "My 2019", year = 2019, category = "My Top Tracks")
+  mutate(playlist = "My 2019", year = "2019", category = "My Top Tracks")
 
 toptracks <-
   bind_rows(NL2020, my2020, NL2019, my2019)
@@ -69,31 +70,51 @@ toptracks_stats["year"] <- c(
 ### The key visualization
 
 ```{r key histogram}
-key_hist <- ggplot(toptracks50,
-       aes(
-         x = key_name,
-         fill = mode_name,
-       )
-      ) +
+ggplotly(
+  ggplot(
+    toptracks50, aes(
+      x = key_name,
+      fill = mode_name,
+      )
+    ) +
   geom_histogram(
     stat = "count", 
-    position = "stack",         # or "dodge" or "fill"
-    show.legend = FALSE) +
-  # facet_wrap(~mode_name) +
-  facet_grid(category~year) +
+    position = "stack"         # or "dodge" or "fill"
+    ) +
+  facet_wrap(~year, ncol = 1) +
   labs(
     x = "Key",
     y = "Number of tracks"
   ) +
-  theme_light()
-  # theme(legend.position = "none")
-ggplotly(key_hist)
+  theme_light() +
+  theme(legend.title = element_blank())
+)
 ```
 
+***
+I think there is not much interesting to be said about the distribution of the keys in my corpus -- maybe because my corpus is too small (200 tracks in total). When plotting different variables against each other, there was no plot that really stood out.
 
-### Achordingly, ... is an outlier
+The plot on the left shows the key distribution of 2019 versus 2020, taking the two modalities into account. The following changes can be seen over time:
 
-```{r}
+- decrease in A minor;
+
+- increase in C major;
+
+- overall decrease in C#;
+
+- increase in F# minor, partly at the 'expense' of F# major;
+
+- big increase in G# major;
+
+- overall low presence of A#, D, D# and E;
+
+- absence of D minor and near-absence of D# major
+
+
+
+### Achordingly, repetition is key
+
+```{r chord and key templates}
 circshift <- function(v, n) {
   if (n == 0) v else c(tail(v, n), head(v, -n))
 }
@@ -181,7 +202,9 @@ key_templates <-
   )
 ```
 
-```{r}
+```{r chordogram setup}
+# 7MkcTLPvF3EiarKLYpX4zz
+# 0URAjyKMW6cGfW6oFMTh6k
 cash <-
   get_tidy_audio_analysis("0URAjyKMW6cGfW6oFMTh6k") %>%
   compmus_align(bars, segments) %>%
@@ -209,7 +232,7 @@ loop_niet_weg <-
   )
 ```
 
-```{r}
+```{r chordogram}
 cash %>% 
   compmus_match_pitch_template(
     chord_templates,         # Change to chord_templates if descired
@@ -220,10 +243,11 @@ cash %>%
     aes(x = start + duration / 2, width = duration, y = name, fill = d)
   ) +
   geom_tile() +
-  scale_x_continuous(breaks=seq(0,155,30)) +
+  scale_x_continuous(breaks=seq(0,120,15)) +
   scale_fill_viridis_c(guide = "none", option = "inferno") +
   theme_minimal() +
-  labs(x = "Time (s)", y = "")
+  theme(rect = element_blank(), line = element_blank()) +
+  labs(x = "Time (s)", y = "", title = "Cash - Sarita Lorena")
 
 loop_niet_weg %>% 
   compmus_match_pitch_template(
@@ -235,11 +259,16 @@ loop_niet_weg %>%
     aes(x = start + duration / 2, width = duration, y = name, fill = d)
   ) +
   geom_tile() +
-  scale_x_continuous(breaks=seq(0,155,30)) +
+  scale_x_continuous(breaks=seq(0,200,15)) +
   scale_fill_viridis_c(guide = "none", option = "inferno") +
   theme_minimal() +
-  labs(x = "Time (s)", y = "")
+  theme(rect = element_blank(), line = element_blank()) +
+  labs(x = "Time (s)", y = "", title = "Loop niet weg - Kris Kross Amsterdam")
 ```
+
+***
+Both songs have a very tropical vibe. It's interesting to see that, assuming the chordogram is correct, both songs seem to use the same few chords throughout the whole song. Whereas "Cash" seems to hold the same chord for a few bars, "Loop niet weg" alternates between chords and then repeats that pattern.
+
 
 
 <!-- volgorde nog aanpassen -->
@@ -278,18 +307,17 @@ While browsing the API Reference, I found the following variables that seem inte
 
 
 
-### How are you feeling?
+### (No) time to relax
 ```{r mood plot}
-mood_scatter <- ggplot(toptracks50,
+ggplotly(ggplot(toptracks50,
        aes(
          x = valence,
          y = energy,
-         color = mode_name,
+         color = year,
          label = track.name
        )
       ) +
-  geom_point(alpha = 0.5, show.legend = FALSE) +
-  geom_rug(size = 0.1) +
+  geom_point(alpha = 0.4) +
   geom_segment(
     data = toptracks_stats, 
     aes(
@@ -297,7 +325,7 @@ mood_scatter <- ggplot(toptracks50,
       y = energy-energy_sd, 
       xend = valence, 
       yend = energy+energy_sd,
-      alpha = 0.6
+      alpha = 0.8
       )
     ) +
   geom_segment(
@@ -307,24 +335,204 @@ mood_scatter <- ggplot(toptracks50,
       y = energy, 
       xend = valence+valence_sd, 
       yend = energy,
-      alpha = 0.6
+      alpha = 0.8
       )
     ) +
   geom_point(
     data = toptracks_stats,
-    # shape = 15,
-    # size = 2,
-    alpha = 0.6
+    shape = 15,
+    size = 3,
+    alpha = 0.8
     ) +
-  facet_grid(category~year) +
+  facet_wrap(~category) +
   labs(
     x = "Valence",
     y = "Energy"
   ) +
-  theme_light()
-  # theme(legend.position = "none")
-ggplotly(mood_scatter)
+  theme_light() + 
+  theme(
+    legend.title = element_blank()
+    # legend.position = "none"
+    )
+)
 ```
+
+```{r mood plot densities, include=FALSE}
+# Playlists
+grid.arrange(
+  ggplot(
+    toptracks50,
+    aes(x = valence,
+        color = playlist,
+        fill = playlist)) +
+    geom_density(alpha = 0.3) +
+    facet_grid(.~year) +
+    theme_light() +
+    theme(axis.title.x = element_blank(), legend.position = "none"),
+  
+  ggplot() + theme(panel.background = element_blank()),
+  
+  ggplot(toptracks50,
+         aes(
+           x = valence,
+           y = energy,
+           color = playlist,
+           label = track.name
+         )
+        ) +
+    geom_point(alpha = 0.5, show.legend = FALSE) +
+    facet_grid(category~year) +
+    theme_light() +
+    theme(legend.position = "none"),
+  
+  ggplot(
+    toptracks50,
+    aes(x = energy,
+        color = playlist,
+        fill = playlist)) +
+    geom_density(alpha = 0.3) +
+    facet_grid(category~.) +
+    coord_flip() +
+    theme_light() +
+    theme(axis.title.y = element_blank()),
+  
+  ncol=2, nrow=2, widths=4:3, heights=1:2
+)
+
+# Categories
+grid.arrange(
+  ggplot(
+    toptracks50,
+    aes(x = valence,
+        color = category,
+        fill = category)) +
+    geom_density(alpha = 0.3) +
+    theme_light() +
+    theme(axis.title.x = element_blank(), legend.position = "none"),
+  
+  ggplot() + theme(panel.background = element_blank()),
+  
+  ggplot(
+    toptracks50,
+    aes(
+      x = valence,
+      y = energy,
+      color = category,
+      label = track.name
+    )
+  ) +
+    geom_point(alpha = 0.5, show.legend = FALSE) +
+    theme_light(),
+  
+  ggplot(
+    toptracks50,
+    aes(x = energy,
+        color = category,
+        fill = category)) +
+    geom_density(alpha = 0.3) +
+    coord_flip() +
+    theme_light() +
+    theme(axis.title.y = element_blank()),
+  
+  ncol=2, nrow=2, widths=4:3, heights=1:2
+)
+
+# Years
+grid.arrange(
+  ggplot(
+    toptracks50,
+    aes(x = valence,
+        color = year,
+        fill = year)) +
+    geom_density(alpha = 0.3) +
+    theme_light() +
+    theme(axis.title.x = element_blank(), legend.position = "none"),
+  
+  ggplot() + theme(panel.background = element_blank()),
+  
+  ggplot(
+    toptracks50,
+    aes(
+      x = valence,
+      y = energy,
+      color = year,
+      label = track.name
+    )
+  ) +
+    geom_point(alpha = 0.5, show.legend = FALSE) +
+    theme_light(),
+  
+  ggplot(
+    toptracks50,
+    aes(x = energy,
+        color = year,
+        fill = year)) +
+    geom_density(alpha = 0.3) +
+    coord_flip() +
+    theme_light() +
+    theme(axis.title.y = element_blank()),
+  
+  ncol=2, nrow=2, widths=4:3, heights=1:2
+)
+```
+
+```{r mood plot 2d density, include=FALSE}
+ggplot(toptracks50,
+       aes(
+         x = valence,
+         y = energy,
+         label = track.name
+       )
+) +
+  stat_density_2d(
+    geom = "polygon", 
+    aes(alpha = ..level.., fill = playlist),
+    bins = 5,
+    show.legend = FALSE) +
+  geom_point(
+    aes(color = playlist), 
+    show.legend = FALSE) +
+  facet_grid(category~year) +
+  theme_light()
+
+
+ggplot(toptracks50,
+       aes(
+         x = valence,
+         y = energy,
+         # color = playlist,
+         label = track.name
+       )
+) +
+  geom_point(
+    aes(color = playlist, alpha = 0.3), 
+    show.legend = FALSE) +
+  stat_density_2d(
+    aes(color = playlist),
+    bins = 4
+    ) +
+  facet_grid(category~year) +
+  theme_light()
+
+
+ggplot(toptracks50,
+       aes(
+         x = valence,
+         y = energy,
+         color = playlist,
+         label = track.name
+       )
+) +
+  geom_point(
+    aes(alpha = 0.3), 
+    show.legend = FALSE) +
+  stat_ellipse(
+    type = "t",
+    linetype = 3) +
+  facet_grid(category~year) +
+  theme_light()
+```
+
 ***
 #### An energy-valence scatter plot
 <!-- Typical My 2020: ... -->
@@ -334,16 +542,15 @@ ggplotly(mood_scatter)
 
 ### (No) time to dance
 ```{r dance plot}
-dance_scatter <- ggplot(toptracks50,
+ggplotly(ggplot(toptracks50,
        aes(
          x = tempo,
          y = danceability,
-         color = mode_name,
+         color = year,
          label = track.name
        )
       ) +
-  geom_point(alpha = 0.5, show.legend = FALSE) +
-  geom_rug(size = 0.1) +
+  geom_point(alpha = 0.4) +
   geom_segment(
     data = toptracks_stats, 
     aes(
@@ -351,7 +558,7 @@ dance_scatter <- ggplot(toptracks50,
       y = danceability-danceability_sd, 
       xend = tempo, 
       yend = danceability+danceability_sd,
-      alpha = 0.6
+      alpha = 0.8
       )
     ) +
   geom_segment(
@@ -361,25 +568,28 @@ dance_scatter <- ggplot(toptracks50,
       y = danceability, 
       xend = tempo+tempo_sd, 
       yend = danceability,
-      alpha = 0.6
+      alpha = 0.8
       )
     ) +
   geom_point(
     data = toptracks_stats,
-    # shape = 15,
-    # size = 2,
-    alpha = 0.6
+    shape = 15,
+    size = 3,
+    alpha = 0.8
     ) +
-  facet_grid(category~year) +
+  facet_wrap(~category) +
   labs(
     x = "Tempo",
     y = "Danceability"
-    ) +
-  theme_light()
-  # theme(legend.position = "none")
-# dance_scatter
-ggplotly(dance_scatter)
+  ) +
+  theme_light() + 
+  theme(
+    legend.title = element_blank()
+    # legend.position = "none"
+    )
+)
 ```
+
 ***
 #### A danceability-tempo scatter plot
 <!-- Typical My 2020: Cash -->
@@ -393,25 +603,115 @@ ggplotly(dance_scatter)
 
 #### Valence versus Energy
 
-(From a violin plot not shown in this storyboard)
+```{r valence density}
+ggplot(
+  toptracks,
+  aes(x = valence,
+      color = playlist,
+      fill = playlist)) +
+  geom_density(alpha = 0.3) +
+  geom_vline(aes(xintercept = mean(valence)), 
+             alpha = 0.5) +
+  geom_vline(data = toptracks_stats, 
+             aes(xintercept = valence, color = playlist),
+             linetype = "dashed") +
+  facet_grid(category~year) +
+  theme_light() +
+  theme(
+    legend.position = "none"
+    )
+```
 
-- Valence: My taste in music has remained fairly constant, although valence was more spread out in My Top Tracks of 2020 than in My Top Tracks of 2019. Interestingly, valence in Top Tracks NL 2019 is very nicely and equally distributed, unlike Top Tracks NL 2020. In fact, Top Tracks NL 2020 seems to have the inverted valence distribution of my Top Tracks playlists.
+- Valence in Top Tracks NL 2019 is very nicely and equally distributed, unlike Top Tracks NL 2020. In fact, Top Tracks NL 2020 seems to have the inverted valence distribution of my Top Tracks playlists.
 
-- Energy: In both My Top Tracks of 2019 and Top Tracks NL of 2019, there is a bump around 0.7. They also spread out downward quite equally. Top Tracks NL 2020 seems to be the odd one out (again); energy was *lower* on average and more spread out, though with a small bump *higher* than the bumps of the other playlists.
+```{r energy density}
+ggplot(
+  toptracks,
+  aes(x = energy,
+      color = playlist,
+      fill = playlist)) +
+  geom_density(alpha = 0.3) +
+  geom_vline(aes(xintercept = mean(energy)), 
+             alpha = 0.5) +
+  geom_vline(data = toptracks_stats, 
+             aes(xintercept = energy, color = playlist),
+             linetype = "dashed") +
+  facet_grid(category~year) +
+  theme_light() +
+  theme(
+    legend.position = "none"
+    )
+```
+
+- Energy: In both categories of 2019, there is a bump around 0.7. They also spread out downward quite equally. The NL Top Tracks of 2020 seems to be the odd one out (again); energy was quite *lower* on average and more spread out. The mode, however, was somewhat *higher* than the bumps of the other playlists.
 
 #### Tempo versus Danceability
 
-- Tempo in 2019 was pretty much the same in both categories, both spiking at 100 bpm. My 2020 had a higer spike at 105 bpm. NL 2020 is totally different form the rest, with no real spikes, more spread out to lower (90) and higher (120) bpm's.
+```{r tempo density}
+ggplot(
+  toptracks,
+  aes(x = tempo,
+      color = playlist,
+      fill = playlist)) +
+  geom_density(alpha = 0.3) +
+  geom_vline(aes(xintercept = mean(tempo)), 
+             alpha = 0.5) +
+  geom_vline(data = toptracks_stats, 
+             aes(xintercept = tempo, color = playlist),
+             linetype = "dashed") +
+  facet_grid(category~year) +
+  theme_light() +
+  theme(
+    legend.position = "none"
+    )
+```
 
-(From a violin plot not shown in this storyboard)
+- The tempo distribution in 2019 was pretty much the same in both categories, both peaking at 100 bpm. The peak tempo of My Top Tracks of 2020 has shifted upwards to 105 bpm. The NL Top Tracks of 2020 is totally different form the rest, with no real peaks, and more spread out to lower (90) and higher (120) bpm's. The reference lines for the means clearly show that there was a decrease in tempo between the NL Top Tracks of 2019 and 2020.
 
-- Danceability: My taste in music has remained somewhat constant, with the bumps of My Top Tracks of 2019 and My Top Tracks of 2020 both at around 0.75, though the overall distribution is more spread out in 2020. Unlike the other plots, this plot shows that, with respect to danceability, playlists are more similar when grouping by year than they are when grouping by category (personal versus NL). Not only the shapes look more similar, the mean dancibilities seem to follow the same trend as well; the mean dancibility was slightly lower in 2020 than in 2019. This could be explained by the fact that, due to social distancing measures, there were less occasions to dance. As a result, artists also made less music *to dance to*.
+```{r danceability density}
+ggplot(
+  toptracks,
+  aes(x = danceability,
+      color = playlist,
+      fill = playlist)) +
+  geom_density(alpha = 0.3) +
+  geom_vline(aes(xintercept = mean(danceability)), 
+             alpha = 0.5) +
+  geom_vline(data = toptracks_stats, 
+             aes(xintercept = danceability, color = playlist),
+             linetype = "dashed") +
+  facet_grid(category~year) +
+  theme_light() +
+  theme(
+    legend.position = "none"
+    )
+```
+
+- Danceability: My taste in music has remained somewhat constant, with the bumps of My Top Tracks of 2019 and My Top Tracks of 2020 both at around 0.75, though the overall distribution is more spread out in 2020 and the mean has slightly decreased. Unlike the other plots, this plot shows that, with respect to danceability, playlists are more similar when grouping by year than they are when grouping by category (personal versus NL). Not only do the shapes look more similar, the mean dancibilities seem to follow the same trend as well; the mean dancibility was slightly lower in 2020 than in 2019. This could be explained by the fact that, due to social distancing measures, there were less occasions to dance. As a result, artists also made less music *to dance to*.
 
 #### Mode
 
-(From a bar plot not shown in this storyboard)
+```{r mode barplot}
+ggplotly(ggplot(
+  toptracks50,
+  aes(
+    x = year,
+    fill = mode_name,
+    alpha = 0.8
+    )
+  ) +
+  geom_bar(position = "stack") +
+  facet_wrap(~category) +
+  labs(x = "", y = "Number of tracks") +
+  theme_light() +
+  theme(
+    panel.grid.major.x = element_blank(),
+    legend.title = element_blank()
+    )
+)
+```
 
-- Mode: In both Top Tracks NL the ratio major versus minor is almost 50/50. My Top Tracks count more minor, with a 40/60 ratio.
+My Top Tracks playlists clearly count more minor modes (64%) than the NL Top Tracks playlists (49%). Also, there is a slight increase in minor tracks in 2020 as opposed to 2019.
 
 
 
@@ -479,10 +779,10 @@ bind_rows(
     )
   ) +
   geom_tile() +
-  labs(x = "Time (s)", y = NULL, fill = "Magnitude") +
   scale_x_continuous(breaks=seq(0,155,30)) +
   scale_fill_viridis_c(guide = "none", option = "inferno") +
   facet_wrap(~type) +
+  labs(x = "Time (s)", y = NULL, fill = "Magnitude") +
   theme_light() +
   theme(
     panel.grid.major.x = element_blank(),
@@ -497,12 +797,12 @@ This song was a typical Top Track of mine in 2020 (see song info). In the bars c
 
 ##### Song info
 Under construction
-| Feature        | Median      | "Sweetie Odo" |
-|----------------|-------------|---------------|
-| Key            |             | G Minor
-| Length         |             | 2:35
-| BPM            |             | 100
-| Time Signature |             | 4/4
+| Feature        | Average                            | "Sweetie Odo" |
+|----------------|------------------------------------|---------------|
+| Key            |`r mode(my2020$key_name)`           | G Minor
+<!-- | Length         |`r mean(my2020$track.duration_ms)`  | 2:35 -->
+| BPM            |`r mean(my2020$tempo)`               | 100
+| Time Signature |`r median(my2020$time_signature)`   | 4/4
 
 
 
@@ -526,10 +826,10 @@ bind_rows(
     )
   ) +
   geom_tile() +
-  labs(x = "Time (s)", y = NULL, fill = "Magnitude") +
   scale_x_continuous(breaks=seq(0,155,30)) +
   scale_fill_viridis_c(guide = "none", option = "inferno") +
   facet_wrap(~type) +
+  labs(x = "Time (s)", y = NULL, fill = "Magnitude") +
   theme_light() +
   theme(
     panel.grid.major.x = element_blank(),
@@ -544,12 +844,6 @@ This song was a typical Top Track of mine in 2020 (see song info). Both cepstogr
 
 ##### Song info
 Under construction
-| Feature        | Median      | "Sweetie Odo" |
-|----------------|-------------|---------------|
-| Key            |             | G Minor
-| Length         |             | 2:35
-| BPM            |             | 100
-| Time Signature |             | 4/4
 
 
 
@@ -595,156 +889,9 @@ The chroma matrix clearly shows the intro, verses (light strips), choruses (dark
 
 
 
-<!-- ### TEST AREA -->
-
-<!-- ```{r TEST distributions} -->
-<!-- ggplot( -->
-<!--   toptracks, -->
-<!--   aes(x = playlist,  -->
-<!--       y = tempo,  -->
-<!--       color = playlist,  -->
-<!--       fill = playlist)) + -->
-<!--   geom_violin(alpha = 0.3) + -->
-<!--   theme_minimal() + -->
-<!--   theme(legend.position = "none") -->
-
-<!-- ggplot( -->
-<!--   toptracks, -->
-<!--   aes(x = playlist,  -->
-<!--       y = tempo,  -->
-<!--       color = playlist,  -->
-<!--       fill = playlist, -->
-<!--       alpha = 0.3)) + -->
-<!--   geom_boxplot() + -->
-<!--   theme_minimal() + -->
-<!--   theme(legend.position = "none") -->
-
-<!-- ggplot( -->
-<!--   toptracks, -->
-<!--   aes(x = tempo,  -->
-<!--       color = playlist,  -->
-<!--       fill = playlist)) + -->
-<!--   geom_density(alpha = 0.3) + -->
-<!--   facet_grid(category~year) + -->
-<!--   theme_classic() + -->
-<!--   theme(legend.position = "none") -->
-
-<!-- ggplot( -->
-<!--   toptracks, -->
-<!--   aes(x = tempo,  -->
-<!--       color = playlist,  -->
-<!--       fill = playlist)) + -->
-<!--   geom_density(alpha = 0.3) + -->
-<!--   facet_grid(category~year) + -->
-<!--   theme_minimal() + -->
-<!--   theme(legend.position = "none") -->
-
-<!-- ggplot( -->
-<!--   toptracks, -->
-<!--   aes(x = tempo,  -->
-<!--       color = playlist,  -->
-<!--       fill = playlist)) + -->
-<!--   geom_density(alpha = 0.3) + -->
-<!--   facet_grid(category~year) + -->
-<!--   theme_light() + -->
-<!--   theme(legend.position = "none") -->
-
-<!-- ggplot( -->
-<!--   toptracks, -->
-<!--   aes(x = tempo,  -->
-<!--       color = playlist,  -->
-<!--       fill = playlist)) + -->
-<!--   geom_density(alpha = 0.3) + -->
-<!--   theme_light() + -->
-<!--   theme(legend.position = "none") -->
-<!-- ``` -->
-
-<!-- ```{r TEST barplots} -->
-<!-- ggplot( -->
-<!--   toptracks50, -->
-<!--   aes(x = playlist, -->
-<!--       fill = mode_name, -->
-<!--       position = "fill")) + -->
-<!--   geom_bar() -->
-
-<!-- ggplot( -->
-<!--   toptracks, -->
-<!--   aes(x = playlist, -->
-<!--       fill = mode_name, -->
-<!--       position = "fill")) + -->
-<!--   geom_bar() -->
-<!-- ``` -->
-
-<!-- ```{r TEST scatter} -->
-<!-- ggplot(toptracks50, -->
-<!--        aes( -->
-<!--          x = tempo, -->
-<!--          y = danceability, -->
-<!--          color = playlist, -->
-<!--          label = track.name -->
-<!--        ) -->
-<!--       ) + -->
-<!--   geom_point(alpha = 0.5, show.legend = FALSE) + -->
-<!--   # geom_density_2d() + -->
-<!--   stat_ellipse() + -->
-<!--   # facet_grid(category~year) + -->
-<!--   facet_wrap(~category) + -->
-<!--   theme_light() -->
-<!-- ``` -->
-
-
-
-
-<!-- NOT INCLUDED -->
-
-
-
-<!-- ### The outliers identified -->
-
-<!-- ```{r box plot} -->
-<!-- box <- ggplot(toptracks, -->
-<!--     aes( -->
-<!--       x = playlist, -->
-<!--       y = energy # valence / energy / tempo / danceability / track.popularity -->
-<!--     ) -->
-<!--   ) + -->
-<!--   # geom_violin(trim=FALSE) + -->
-<!--   # geom_dotplot(binaxis='y', stackdir='center') + -->
-<!--   stat_summary(fun.y=mean, geom="point", shape=16, size=4) + -->
-<!--   geom_boxplot(width=0.1) + -->
-<!--   # scale_y_continuous(limits=c(0,1)) + -->
-<!--   theme_minimal() + -->
-<!--   theme(legend.position = "none") -->
-<!-- ggplotly(box) -->
-<!-- ``` -->
-
-<!-- *** -->
-<!-- ```{r, include=FALSE} -->
-<!-- filter(my2019, energy<0.2)$track.name -->
-<!-- filter(my2020, energy<0.2)$track.name -->
-<!-- #filter(my2019, danceability<0.48)$track.name -->
-<!-- #filter(my2020, danceability<0.4)$track.name -->
-<!-- # Tempo has a lot of outliers -->
-<!-- ``` -->
-<!-- The outlier of My 2019 is "Sober - Stripped" by Raye. -->
-
-<!-- The outliers of 2020 are "So Pra Mim (Acoustic)" by Sarita and "Only Wanna Be With You - Unplugged" by Samm Henshaw. -->
-
-
-
-<!-- ### Test -->
-
-<!-- ```{r, include=FALSE} -->
-<!-- # for (row in toptracks50) { -->
-<!-- #   row$track.id -->
-<!-- #   get -->
-<!-- #   toptracks %>% mutate(genre = ) -->
-<!-- # } -->
-<!-- ``` -->
-
-
 
 <!-- Data visualization: -->
 <!-- - https://rkabacoff.github.io/datavis/Time.html#dummbbell-charts -->
 <!-- - spider chart: https://www.r-graph-gallery.com/spider-or-radar-chart.html -->
 <!-- - circular barplot: https://www.r-graph-gallery.com/circular-barplot.html -->
+<!-- http://www.sthda.com/english/wiki/ggplot2-scatter-plots-quick-start-guide-r-software-and-data-visualization -->
