@@ -78,7 +78,7 @@ toptracks_stats["year"] <- c(
 
 <!-- NIEUWE CONTENT -->
 
-### Title
+### Covid shows no tempo trend
 
 ```{r tempo density 2}
 ggplotly(ggplot(
