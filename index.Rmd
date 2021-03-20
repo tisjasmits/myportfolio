@@ -13,9 +13,14 @@ knitr::opts_chunk$set(echo = FALSE)
 library(tidyverse)
 library(spotifyr)
 library(compmus)
+
 library(flexdashboard)
 library(plotly)
 library(gridExtra)
+
+library(tidymodels)
+library(ggdendro)
+library(heatmaply)
 
 theme_mine <-
   theme_minimal() +
@@ -78,48 +83,153 @@ toptracks_stats["year"] <- c(
 
 <!-- NIEUWE CONTENT -->
 
-### Covid shows no tempo trend
+### The final judgment: classification
 
-```{r tempo density 2}
-ggplotly(ggplot(
-  toptracks,
-  aes(x = tempo,
-      color = playlist,
-      fill = playlist)) +
-  geom_density(alpha = 0.3) +
-  geom_vline(aes(xintercept = mean(tempo)), 
-             alpha = 0.5) +
-  geom_vline(data = toptracks_stats, 
-             aes(xintercept = tempo, color = playlist),
-             linetype = "dashed") +
-    
-  geom_text(data = toptracks_stats,
-    aes(x = 130,
-        y = 0.022,
-        label = "mean")
-  ) +
-    
-  scale_x_continuous(breaks=seq(20,220,40)) +
-  facet_grid(category~year) +
-    
-  labs(x = "Tempo", y = "Density") +
-  theme_mine +
-  theme(
-    axis.text.y = element_blank(),
-    axis.ticks.y = element_blank(),
-    panel.grid.major.y = element_blank(),
-    panel.grid.minor.y = element_blank(),
-    panel.border = element_blank(),
-    legend.position = "none"
+```{r classifier setup}
+get_conf_mat <- function(fit) {
+  outcome <- .get_tune_outcome_names(fit)
+  fit %>% 
+    collect_predictions() %>% 
+    conf_mat(truth = outcome, estimate = .pred_class)
+}  
+
+get_pr <- function(fit) {
+  fit %>% 
+    conf_mat_resampled() %>% 
+    group_by(Prediction) %>% mutate(precision = Freq / sum(Freq)) %>% 
+    group_by(Truth) %>% mutate(recall = Freq / sum(Freq)) %>% 
+    ungroup() %>% filter(Prediction == Truth) %>% 
+    select(class = Prediction, precision, recall)
+}
+
+toptracks_features <-
+  toptracks50 %>%
+  add_audio_analysis() %>% 
+  mutate(
+    playlist = factor(playlist),
+    segments = map2(segments, key, compmus_c_transpose),
+    pitches =
+      map(
+        segments,
+        compmus_summarise, pitches,
+        method = "mean", norm = "manhattan"
+      ),
+    timbre =
+      map(
+        segments,
+        compmus_summarise, timbre,
+        method = "mean",
+      )
+  ) %>%
+  mutate(pitches = map(pitches, compmus_normalise, "clr")) %>%
+  mutate_at(vars(pitches, timbre), map, bind_rows) %>%
+  unnest(cols = c(pitches, timbre))
+
+toptracks_recipe_all <-
+  recipe(
+    playlist ~
+      danceability +
+      energy +
+      loudness +
+      speechiness +
+      acousticness +
+      instrumentalness +
+      liveness +
+      valence +
+      tempo +
+      duration +
+      C + `C#|Db` + D + `D#|Eb` +
+      E + `F` + `F#|Gb` + G +
+      `G#|Ab` + A + `A#|Bb` + B +
+      c01 + c02 + c03 + c04 + c05 + c06 +
+      c07 + c08 + c09 + c10 + c11 + c12,
+    data = toptracks_features,
+  ) %>%
+  step_center(all_predictors()) %>%
+  step_scale(all_predictors())      # Converts to z-scores.
+
+toptracks_recipe_top <-
+  recipe(
+    playlist ~
+      tempo + A + 
+      c02 + c03 + c05 + c06 + c07 + c08 + c09 + c10 + c11 + c12,
+    data = toptracks_features,
+  ) %>%
+  step_center(all_predictors()) %>%
+  step_scale(all_predictors())      # Converts to z-scores.
+
+toptracks_cv <- toptracks_features %>% vfold_cv(5)
+```
+
+#### k-Nearest Neighbor
+```{r k-Nearest Neighbor}
+knn_model <-
+  nearest_neighbor(neighbors = 1) %>%
+  set_mode("classification") %>% 
+  set_engine("kknn")
+toptracks_knn <- 
+  workflow() %>% 
+  add_recipe(toptracks_recipe_all) %>% 
+  add_model(knn_model) %>% 
+  fit_resamples(
+    toptracks_cv, 
+    control = control_resamples(save_pred = TRUE)
   )
-)
+# toptracks_knn %>% get_conf_mat() %>% autoplot(type = "mosaic")
+toptracks_knn %>% get_conf_mat() %>% autoplot(type = "heatmap") + labs(title = "Confusion matrix of a k-nearest neighbor classifier, taking all features into consideration")
+toptracks_knn %>% get_pr()
+```
+
+#### Random forest
+```{r random forest}
+forest_model <-
+  rand_forest() %>%
+  set_mode("classification") %>% 
+  set_engine("ranger", importance = "impurity")
+
+toptracks_forest <- 
+  workflow() %>% 
+  add_recipe(toptracks_recipe_all) %>% 
+  add_model(forest_model) %>% 
+  fit_resamples(
+    toptracks_cv, 
+    control = control_resamples(save_pred = TRUE)
+  )
+toptracks_forest_top <- 
+  workflow() %>% 
+  add_recipe(toptracks_recipe_top) %>% 
+  add_model(forest_model) %>% 
+  fit_resamples(
+    toptracks_cv, 
+    control = control_resamples(save_pred = TRUE)
+  )
+
+# toptracks_forest %>% get_conf_mat() %>% autoplot(type = "mosaic")
+toptracks_forest %>% get_conf_mat() %>% autoplot(type = "heatmap") + labs(title = "Confusion matrix of a random forest classifier, taking all features into consideration")
+toptracks_forest %>% get_pr()
+toptracks_forest_top %>% get_conf_mat() %>% autoplot(type = "heatmap") + labs(title = "Confusion matrix of a random forest classifier, taking only the top features into consideration")
+toptracks_forest_top %>% get_pr()
+
+workflow() %>% 
+  add_recipe(toptracks_recipe_all) %>% 
+  add_model(forest_model) %>% 
+  fit(toptracks_features) %>% 
+  pluck("fit", "fit", "fit") %>%
+  ranger::importance() %>% 
+  enframe() %>% 
+  mutate(name = fct_reorder(name, value)) %>% 
+  ggplot(aes(name, value)) + 
+  geom_col() + 
+  coord_flip() +
+  theme_minimal() +
+  labs(title = "Importance of features for a random forest classifier", x = NULL, y = "Importance")
 ```
 
 ***
 
-Unfortunately, my laptop cannot handle tempograms... Instead, I have made a density plot to compare the tempi in different playlists of my corpus.
+As can be seen in the top confusion matrix, the k-nearest neighbor classifier performs badly. However disappointing, this result is not surprising. Just as we have seen no big differences between the four playlists overall, it makes sense that nearest neighbors might not be from the 'correct' playlist.
 
-The tempo distribution in 2019 was pretty much the same in both categories, both peaking at 100 bpm. The peak tempo of My Top Tracks of 2020 has shifted upwards to 105 bpm. The NL Top Tracks of 2020 is totally different form the rest, with no real peaks, and more spread out to lower (90) and higher (120) bpm's. The reference lines for the means clearly show that there was a decrease in tempo between the NL Top Tracks of 2019 and 2020.
+The random forest classifiers perform much better. However, they are still not satisfactory and their results might even be considered insignificant. The second random forest classifier seems to perform somewhat better than the first. The second only considers the following features: tempo, A, and all timbre features except c01 and c04. The last plot shows that these selected features indeed are more important than others.
 
 
 <!-- volgorde nog aanpassen -->
@@ -998,6 +1108,52 @@ loop_niet_weg %>%
 
 ***
 Both songs have a very tropical vibe. It's interesting to see that, assuming the chordogram is correct, both songs seem to use the same few chords throughout the whole song. Whereas "Cash" seems to hold the same chord for a few bars, "Loop niet weg" alternates between chords and then repeats that pattern.
+
+
+
+
+### Covid shows no tempo trend
+
+```{r tempo density 2}
+ggplotly(ggplot(
+  toptracks,
+  aes(x = tempo,
+      color = playlist,
+      fill = playlist)) +
+  geom_density(alpha = 0.3) +
+  geom_vline(aes(xintercept = mean(tempo)), 
+             alpha = 0.5) +
+  geom_vline(data = toptracks_stats, 
+             aes(xintercept = tempo, color = playlist),
+             linetype = "dashed") +
+    
+  geom_text(data = toptracks_stats,
+    aes(x = 130,
+        y = 0.022,
+        label = "mean")
+  ) +
+    
+  scale_x_continuous(breaks=seq(20,220,40)) +
+  facet_grid(category~year) +
+    
+  labs(x = "Tempo", y = "Density") +
+  theme_mine +
+  theme(
+    axis.text.y = element_blank(),
+    axis.ticks.y = element_blank(),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    panel.border = element_blank(),
+    legend.position = "none"
+  )
+)
+```
+
+***
+
+Unfortunately, my laptop cannot handle tempograms... Instead, I have made a density plot to compare the tempi in different playlists of my corpus.
+
+The tempo distribution in 2019 was pretty much the same in both categories, both peaking at 100 bpm. The peak tempo of My Top Tracks of 2020 has shifted upwards to 105 bpm. The NL Top Tracks of 2020 is totally different form the rest, with no real peaks, and more spread out to lower (90) and higher (120) bpm's. The reference lines for the means clearly show that there was a decrease in tempo between the NL Top Tracks of 2019 and 2020.
 
 
 
