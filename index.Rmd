@@ -161,7 +161,7 @@ toptracks_recipe_top <-
 toptracks_cv <- toptracks_features %>% vfold_cv(5)
 ```
 
-#### k-Nearest Neighbor
+**k-nearest neighbor**
 ```{r k-Nearest Neighbor}
 knn_model <-
   nearest_neighbor(neighbors = 1) %>%
@@ -183,7 +183,7 @@ toptracks_knn %>% get_conf_mat() %>%
 knitr::kable(toptracks_knn %>% get_pr())
 ```
 
-#### Random forest
+**Random forest**
 ```{r random forest}
 forest_model <-
   rand_forest() %>%
@@ -239,7 +239,6 @@ workflow() %>%
 
 ***
 
-#### Commentary
 As can be seen in the top confusion matrix, the k-nearest neighbor classifier performs badly. However disappointing, this result is not surprising. Just as we have seen no big differences between the four playlists overall, it makes sense that nearest neighbors might not be from the 'correct' playlist.
 
 The random forest classifiers perform much better. However, they are still not satisfactory and their results might even be considered insignificant. The second random forest classifier seems to perform somewhat better than the first. The second only considers the following features: tempo, A, and all timbre features except c01 and c04. The last plot shows that these selected features indeed are more important than others.
@@ -282,6 +281,9 @@ While browsing the API Reference, I found the following variables that seem inte
 
 
 ### (No) time to relax
+
+#### An energy-valence scatter plot
+
 ```{r mood plot}
 ggplotly(ggplot(toptracks50,
        aes(
@@ -507,7 +509,6 @@ ggplot(toptracks50,
 ```
 
 ***
-#### An energy-valence scatter plot
 <!-- Typical My 2020: ... -->
 <!-- Typical NL 2020: ... -->
 <!-- Typical because in the middle of the plot () -->
