@@ -176,8 +176,11 @@ toptracks_knn <-
     control = control_resamples(save_pred = TRUE)
   )
 # toptracks_knn %>% get_conf_mat() %>% autoplot(type = "mosaic")
-toptracks_knn %>% get_conf_mat() %>% autoplot(type = "heatmap") + labs(title = "Confusion matrix of a k-nearest neighbor classifier, taking all features into consideration")
-toptracks_knn %>% get_pr()
+toptracks_knn %>% get_conf_mat() %>% 
+  autoplot(type = "heatmap") + 
+  labs(title = "Confusion matrix for all features") +
+  scale_fill_viridis_c(limits = c(2, 30), direction = -1, guide = "none", option = "inferno")
+knitr::kable(toptracks_knn %>% get_pr())
 ```
 
 #### Random forest
@@ -205,10 +208,17 @@ toptracks_forest_top <-
   )
 
 # toptracks_forest %>% get_conf_mat() %>% autoplot(type = "mosaic")
-toptracks_forest %>% get_conf_mat() %>% autoplot(type = "heatmap") + labs(title = "Confusion matrix of a random forest classifier, taking all features into consideration")
-toptracks_forest %>% get_pr()
-toptracks_forest_top %>% get_conf_mat() %>% autoplot(type = "heatmap") + labs(title = "Confusion matrix of a random forest classifier, taking only the top features into consideration")
-toptracks_forest_top %>% get_pr()
+toptracks_forest %>% get_conf_mat() %>% 
+  autoplot(type = "heatmap") + 
+  labs(title = "Confusion matrix for all features") +
+  scale_fill_viridis_c(limits = c(2, 30), direction = -1, guide = "none", option = "inferno")
+knitr::kable(toptracks_forest %>% get_pr())
+
+toptracks_forest_top %>% get_conf_mat() %>% 
+  autoplot(type = "heatmap") + 
+  labs(title = "Confusion matrix for the top features") +
+  scale_fill_viridis_c(limits = c(2, 30), direction = -1, guide = "none", option = "inferno")
+knitr::kable(toptracks_forest_top %>% get_pr())
 
 workflow() %>% 
   add_recipe(toptracks_recipe_all) %>% 
@@ -218,15 +228,18 @@ workflow() %>%
   ranger::importance() %>% 
   enframe() %>% 
   mutate(name = fct_reorder(name, value)) %>% 
-  ggplot(aes(name, value)) + 
+  ggplot(aes(name, value, fill = value)) + 
+  scale_fill_viridis_c(limits = c(1.5, 5.5), guide = "none", option = "inferno") +
   geom_col() + 
   coord_flip() +
   theme_minimal() +
-  labs(title = "Importance of features for a random forest classifier", x = NULL, y = "Importance")
+  labs(title = "Importance of features for a random forest classifier", x = NULL, y = "Importance") +
+  theme(panel.grid.minor.x = element_blank())
 ```
 
 ***
 
+#### Commentary
 As can be seen in the top confusion matrix, the k-nearest neighbor classifier performs badly. However disappointing, this result is not surprising. Just as we have seen no big differences between the four playlists overall, it makes sense that nearest neighbors might not be from the 'correct' playlist.
 
 The random forest classifiers perform much better. However, they are still not satisfactory and their results might even be considered insignificant. The second random forest classifier seems to perform somewhat better than the first. The second only considers the following features: tempo, A, and all timbre features except c01 and c04. The last plot shows that these selected features indeed are more important than others.
@@ -543,7 +556,7 @@ ggplotly(ggplot(toptracks50,
   
   facet_wrap(~category) +
   labs(
-    x = "Tempo",
+    x = "Tempo (bpm)",
     y = "Danceability"
   ) +
   theme_mine
@@ -658,7 +671,7 @@ ggplotly(ggplot(
   scale_x_continuous(breaks=seq(20,220,40)) +
   facet_grid(category~year) +
     
-  labs(x = "Tempo", y = "Density") +
+  labs(x = "Tempo (bpm)", y = "Density") +
   theme_mine +
   theme(
     axis.text.y = element_blank(),
@@ -1136,7 +1149,7 @@ ggplotly(ggplot(
   scale_x_continuous(breaks=seq(20,220,40)) +
   facet_grid(category~year) +
     
-  labs(x = "Tempo", y = "Density") +
+  labs(x = "Tempo (bpm)", y = "Density") +
   theme_mine +
   theme(
     axis.text.y = element_blank(),
