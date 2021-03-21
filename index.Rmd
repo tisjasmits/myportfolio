@@ -161,7 +161,7 @@ toptracks_recipe_top <-
 toptracks_cv <- toptracks_features %>% vfold_cv(5)
 ```
 
-**k-nearest neighbor**
+#### k-nearest neighbor
 ```{r k-Nearest Neighbor}
 knn_model <-
   nearest_neighbor(neighbors = 1) %>%
@@ -178,12 +178,20 @@ toptracks_knn <-
 # toptracks_knn %>% get_conf_mat() %>% autoplot(type = "mosaic")
 toptracks_knn %>% get_conf_mat() %>% 
   autoplot(type = "heatmap") + 
-  labs(title = "Confusion matrix for all features") +
-  scale_fill_viridis_c(limits = c(2, 30), direction = -1, guide = "none", option = "inferno")
-knitr::kable(toptracks_knn %>% get_pr())
+  labs(subtitle = "Confusion matrix for all features \nwith a k-nearest neighbor classifier") +
+  scale_fill_viridis_c(limits = c(2, 30), direction = -1, guide = "none", option = "inferno") +
+  theme_mine +
+  theme(panel.grid = element_blank(), 
+        panel.border = element_blank(),
+        axis.ticks = element_blank())
+knitr::kable(toptracks_knn %>% get_pr(), 
+             format = "html", 
+             table.attr = "style='width:30%;'")
 ```
 
-**Random forest**
+As can be seen in the confusion matrix above, the k-nearest neighbor classifier performs badly. However disappointing, this result is not surprising. Just as we have seen no big differences between the four playlists overall, it makes sense that nearest neighbors might not be from the 'correct' playlist.
+
+#### Random forest
 ```{r random forest}
 forest_model <-
   rand_forest() %>%
@@ -210,16 +218,32 @@ toptracks_forest_top <-
 # toptracks_forest %>% get_conf_mat() %>% autoplot(type = "mosaic")
 toptracks_forest %>% get_conf_mat() %>% 
   autoplot(type = "heatmap") + 
-  labs(title = "Confusion matrix for all features") +
-  scale_fill_viridis_c(limits = c(2, 30), direction = -1, guide = "none", option = "inferno")
-knitr::kable(toptracks_forest %>% get_pr())
+  labs(subtitle = "Confusion matrix for all features \nwith a random forest classifier") +
+  scale_fill_viridis_c(limits = c(2, 30), direction = -1, guide = "none", option = "inferno") +
+  theme_mine +
+  theme(panel.grid = element_blank(), 
+        panel.border = element_blank(),
+        axis.ticks = element_blank())
+knitr::kable(toptracks_forest %>% get_pr(), 
+             format = "html", 
+             table.attr = "style='width:30%;'")
 
 toptracks_forest_top %>% get_conf_mat() %>% 
   autoplot(type = "heatmap") + 
-  labs(title = "Confusion matrix for the top features") +
-  scale_fill_viridis_c(limits = c(2, 30), direction = -1, guide = "none", option = "inferno")
-knitr::kable(toptracks_forest_top %>% get_pr())
+  labs(subtitle = "Confusion matrix for the top features \nwith a random forest classifier") +
+  scale_fill_viridis_c(limits = c(2, 30), direction = -1, guide = "none", option = "inferno") +
+  theme_mine +
+  theme(panel.grid = element_blank(), 
+        panel.border = element_blank(),
+        axis.ticks = element_blank())
+knitr::kable(toptracks_forest_top %>% get_pr(), 
+             format = "html", 
+             table.attr = "style='width:30%;'")
+```
 
+The random forest classifiers perform much better. However, they are still not satisfactory and their results might even be considered insignificant. The second random forest classifier does seem to perform *somewhat* better than the first. The second only considers the following features: tempo, A, and all timbre features except c01 and c04. The plot below shows that these selected features indeed are more important than others.
+
+```{r feature importance}
 workflow() %>% 
   add_recipe(toptracks_recipe_all) %>% 
   add_model(forest_model) %>% 
@@ -232,16 +256,14 @@ workflow() %>%
   scale_fill_viridis_c(limits = c(1.5, 5.5), guide = "none", option = "inferno") +
   geom_col() + 
   coord_flip() +
-  theme_minimal() +
-  labs(title = "Importance of features for a random forest classifier", x = NULL, y = "Importance") +
-  theme(panel.grid.minor.x = element_blank())
+  scale_y_continuous(expand = expansion(0.015)) +
+  theme_mine +
+  labs(subtitle = "Importance of features for a random forest classifier", x = NULL, y = NULL) +
+  theme(panel.grid.minor.x = element_blank(),
+        panel.border = element_blank(),
+        axis.ticks = element_blank())
 ```
 
-***
-
-As can be seen in the top confusion matrix, the k-nearest neighbor classifier performs badly. However disappointing, this result is not surprising. Just as we have seen no big differences between the four playlists overall, it makes sense that nearest neighbors might not be from the 'correct' playlist.
-
-The random forest classifiers perform much better. However, they are still not satisfactory and their results might even be considered insignificant. The second random forest classifier seems to perform somewhat better than the first. The second only considers the following features: tempo, A, and all timbre features except c01 and c04. The last plot shows that these selected features indeed are more important than others.
 
 
 <!-- volgorde nog aanpassen -->
@@ -253,13 +275,15 @@ The random forest classifiers perform much better. However, they are still not s
 The corpus I am going to analyze consists of four playlists: **my Top Tracks of 2019**, **my Top Tracks of 2020**, the **Top Tracks NL of 2019** and the **Top Tracks NL of 2020**. These playlists are respectively representative of the following groups I will be comparing: my taste in music in 2019, my taste in music in 2020, the average Dutch taste in music in 2019, and the average Dutch taste in music in 2020.
 In this portfolio, I want to find an answer to the following questions:
 
-##### 1. How did my taste in music in 2020 differ from 2019? (comparison between group 1 and 2)
+<span style="color: black;">
+**1. How did my taste in music in 2020 differ from 2019? (comparison between group 1 and 2)**
 
-##### 2. How did the average Dutch taste in music in 2020 differ from 2019? (comparison between group 3 and 4)
+**2. How did the average Dutch taste in music in 2020 differ from 2019? (comparison between group 3 and 4)**
 
-##### 3. How average was my taste in music in 2019? (comparison between group 1 and 3)
+**3. How average was my taste in music in 2019? (comparison between group 1 and 3)**
 
-##### 4. How average was my taste in music in 2020? (comparison between group 2 and 4)
+**4. How average was my taste in music in 2020? (comparison between group 2 and 4)**
+</span>
 
 I find it very interesting to analyze these comparisons, especially in light of the coronavirus pandemic. Due to the **social distancing measures** I did not listen to music in any social setting, such as hanging out with friends, clubbing, or even working out at the gym. My hypothesis is that my taste in music was therefore *less* average in 2020 than it was in 2019.
 
@@ -281,8 +305,6 @@ While browsing the API Reference, I found the following variables that seem inte
 
 
 ### (No) time to relax
-
-#### An energy-valence scatter plot
 
 ```{r mood plot}
 ggplotly(ggplot(toptracks50,
@@ -509,6 +531,7 @@ ggplot(toptracks50,
 ```
 
 ***
+#### An energy-valence scatter plot
 <!-- Typical My 2020: ... -->
 <!-- Typical NL 2020: ... -->
 <!-- Typical because in the middle of the plot () -->
@@ -608,6 +631,7 @@ ggplotly(ggplot(
     panel.border = element_blank(),
     legend.position = "none"
   )
+  , width = 800
 )
 ```
 
@@ -682,6 +706,7 @@ ggplotly(ggplot(
     panel.border = element_blank(),
     legend.position = "none"
   )
+  , width = 800
 )
 ```
 
@@ -718,6 +743,7 @@ ggplotly(ggplot(
     panel.border = element_blank(),
     legend.position = "none"
   )
+  , width = 800
 )
 ```
 
@@ -737,9 +763,10 @@ ggplotly(ggplot(
   geom_bar(position = "stack") +
   
   facet_wrap(~category) +
-  labs(x = "", y = "Number of tracks") +
+  labs(x = NULL, y = "Number of tracks") +
   theme_mine +
   theme(panel.grid.major.x = element_blank())
+  , width = 800
 )
 ```
 
@@ -908,7 +935,7 @@ bind_rows(
   coord_fixed() +
   facet_wrap(~type) +
   scale_fill_viridis_c(guide = "none", option = "inferno") +
-  labs(x = "", y = "") +
+  labs(x = NULL, y = NULL) +
   theme_mine +
   theme(panel.border = element_blank())
 ```
@@ -1101,7 +1128,7 @@ cash %>%
   scale_fill_viridis_c(guide = "none", option = "inferno") +
   theme_mine +
   theme(rect = element_blank(), line = element_blank()) +
-  labs(x = "Time (s)", y = "", title = "Cash - Sarita Lorena")
+  labs(x = "Time (s)", y = NULL, title = "Cash - Sarita Lorena")
 
 loop_niet_weg %>% 
   compmus_match_pitch_template(
@@ -1117,7 +1144,7 @@ loop_niet_weg %>%
   scale_fill_viridis_c(guide = "none", option = "inferno") +
   theme_mine +
   theme(rect = element_blank(), line = element_blank()) +
-  labs(x = "Time (s)", y = "", title = "Loop niet weg - Kris Kross Amsterdam")
+  labs(x = "Time (s)", y = NULL, title = "Loop niet weg - Kris Kross Amsterdam")
 ```
 
 ***
