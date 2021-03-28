@@ -1,11 +1,21 @@
 ---
-title: "Measuring covid measures"
+title: "Measuring Covid Measures"
 author: "Tisja Smits"
+date: "2021"
 output: 
     flexdashboard::flex_dashboard:
-        storyboard: true
-        theme: journal # default / cosmo / bootstrap / cerulean / journal! / flatly! / readable / spacelab / united / lumen / paper / sandstone / simplex! / yeti!
+      orientation: rows
+      storyboard: true
+      theme: journal # default / cosmo / bootstrap / cerulean / journal! / flatly! / readable / spacelab / united / lumen / paper / sandstone / simplex! / yeti!
 ---
+
+<style type="text/css">
+  body{
+  font-family: "Rubik", Light;
+  color: black;
+  }
+</style>
+
 
 ```{r package and theme setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
@@ -25,7 +35,7 @@ library(heatmaply)
 theme_mine <-
   theme_minimal() +
   theme(
-    text = element_text(family = "Rubik", size = 12),
+    text = element_text(family = "Rubik"),
     legend.title = element_blank(),
     strip.text = element_text(color = "black"),
     strip.background = element_rect(fill = "gray90", color = NA),
@@ -34,25 +44,32 @@ theme_mine <-
     )
 ```
 
-```{r toptracks setup}
-NL2020 <- get_playlist_audio_features("", "37i9dQZF1DWU7JsJYlV18s") %>% 
-  mutate(playlist = "NL 2020", year = "2020", category = "NL Top Tracks")
-my2020 <- get_playlist_audio_features("", "37i9dQZF1ELZX0wn2u2RJw") %>% 
-  mutate(playlist = "My 2020", year = "2020", category = "My Top Tracks")
-NL2019 <- get_playlist_audio_features("", "37i9dQZF1DX24O9ZrSq8yt") %>% 
-  mutate(playlist = "NL 2019", year = "2019", category = "NL Top Tracks")
+```{r toptracks setup, include=FALSE}
 my2019 <- get_playlist_audio_features("", "37i9dQZF1Etf5utVpuKPi7")  %>% 
-  mutate(playlist = "My 2019", year = "2019", category = "My Top Tracks")
+  mutate(playlist = "2019", category = "personal")
+my2020 <- get_playlist_audio_features("", "37i9dQZF1ELZX0wn2u2RJw") %>% 
+  mutate(playlist = "2020", category = "personal")
+my2021 <- bind_rows(
+  get_playlist_audio_features("", "6US6AXRPEDXScdalyqL3z4"),
+  get_playlist_audio_features("", "3o3ct2BSsEfiO2jV7qycsl")
+  ) %>% mutate(playlist = "2021", category = "personal")
 
-toptracks <-
-  bind_rows(NL2020, my2020, NL2019, my2019)
+pop <- get_playlist_audio_features("", "37i9dQZF1DX6gRTxU4AfAv") %>% 
+  mutate(playlist = "Pop", category = "genres")
+dance <- get_playlist_audio_features("", "37i9dQZF1DX0W5G2DBOR2F") %>% 
+  mutate(playlist = "Dance", category = "genres")
+hiphop <- get_playlist_audio_features("", "37i9dQZF1DX6rJpshxuzGT")[1:50,] %>% 
+  mutate(playlist = "Hip-Hop/R&B", category = "genres")
+indie <- get_playlist_audio_features("", "37i9dQZF1DWYeyJxik6dE1") %>% 
+  mutate(playlist = "Indie/Rock", category = "genres")
 
-toptracks50 <-
-  bind_rows(NL2020, my2020[1:50,], NL2019, my2019[1:50,])
+corpus <-
+  bind_rows(my2019, my2020, my2021, pop, dance, hiphop, indie)
 
-toptracks_stats <- toptracks %>% 
+corpus_stats <- corpus %>% 
   group_by(playlist) %>%
   summarise(
+    category = "stat",
     valence_sd = sd(valence),
     valence = mean(valence),
     energy_sd = sd(energy),
@@ -64,848 +81,289 @@ toptracks_stats <- toptracks %>%
     loudness_sd = sd(loudness),
     loudness = mean(loudness),
     track.name = NA,     # or "average"
+    time_signature = median(time_signature),
     key = median(key),
+    mode_sd = sd(mode),
     mode = mean(mode),
     mode_name = NA
     )
-toptracks_stats["category"] <- c(
-  "My Top Tracks","My Top Tracks",
-  "NL Top Tracks","NL Top Tracks")
-toptracks_stats["year"] <- c(
-  "2019","2020",
-  "2019","2020")
 ```
 
-
-
-<!-- volgorde nog aanpassen -->
-
-
-<!-- NIEUWE CONTENT -->
-
-### The final judgment: classification
-
-```{r classifier setup}
-get_conf_mat <- function(fit) {
-  outcome <- .get_tune_outcome_names(fit)
-  fit %>% 
-    collect_predictions() %>% 
-    conf_mat(truth = outcome, estimate = .pred_class)
-}  
-
-get_pr <- function(fit) {
-  fit %>% 
-    conf_mat_resampled() %>% 
-    group_by(Prediction) %>% mutate(precision = Freq / sum(Freq)) %>% 
-    group_by(Truth) %>% mutate(recall = Freq / sum(Freq)) %>% 
-    ungroup() %>% filter(Prediction == Truth) %>% 
-    select(class = Prediction, precision, recall)
-}
-
-toptracks_features <-
-  toptracks50 %>%
-  add_audio_analysis() %>% 
-  mutate(
-    playlist = factor(playlist),
-    segments = map2(segments, key, compmus_c_transpose),
-    pitches =
-      map(
-        segments,
-        compmus_summarise, pitches,
-        method = "mean", norm = "manhattan"
-      ),
-    timbre =
-      map(
-        segments,
-        compmus_summarise, timbre,
-        method = "mean",
-      )
-  ) %>%
-  mutate(pitches = map(pitches, compmus_normalise, "clr")) %>%
-  mutate_at(vars(pitches, timbre), map, bind_rows) %>%
-  unnest(cols = c(pitches, timbre))
-
-toptracks_recipe_all <-
-  recipe(
-    playlist ~
-      danceability +
-      energy +
-      loudness +
-      speechiness +
-      acousticness +
-      instrumentalness +
-      liveness +
-      valence +
-      tempo +
-      duration +
-      C + `C#|Db` + D + `D#|Eb` +
-      E + `F` + `F#|Gb` + G +
-      `G#|Ab` + A + `A#|Bb` + B +
-      c01 + c02 + c03 + c04 + c05 + c06 +
-      c07 + c08 + c09 + c10 + c11 + c12,
-    data = toptracks_features,
-  ) %>%
-  step_center(all_predictors()) %>%
-  step_scale(all_predictors())      # Converts to z-scores.
-
-toptracks_recipe_top <-
-  recipe(
-    playlist ~
-      tempo + A + 
-      c02 + c03 + c05 + c06 + c07 + c08 + c09 + c10 + c11 + c12,
-    data = toptracks_features,
-  ) %>%
-  step_center(all_predictors()) %>%
-  step_scale(all_predictors())      # Converts to z-scores.
-
-toptracks_cv <- toptracks_features %>% vfold_cv(5)
-```
-
-#### k-nearest neighbor
-```{r k-Nearest Neighbor}
-knn_model <-
-  nearest_neighbor(neighbors = 1) %>%
-  set_mode("classification") %>% 
-  set_engine("kknn")
-toptracks_knn <- 
-  workflow() %>% 
-  add_recipe(toptracks_recipe_all) %>% 
-  add_model(knn_model) %>% 
-  fit_resamples(
-    toptracks_cv, 
-    control = control_resamples(save_pred = TRUE)
-  )
-# toptracks_knn %>% get_conf_mat() %>% autoplot(type = "mosaic")
-toptracks_knn %>% get_conf_mat() %>% 
-  autoplot(type = "heatmap") + 
-  labs(subtitle = "Confusion matrix for all features \nwith a k-nearest neighbor classifier") +
-  scale_fill_viridis_c(limits = c(2, 30), direction = -1, guide = "none", option = "inferno") +
-  theme_mine +
-  theme(panel.grid = element_blank(), 
-        panel.border = element_blank(),
-        axis.ticks = element_blank())
-knitr::kable(toptracks_knn %>% get_pr(), 
-             format = "html", 
-             table.attr = "style='width:30%;'")
-```
-
-As can be seen in the confusion matrix above, the k-nearest neighbor classifier performs badly. However disappointing, this result is not surprising. Just as we have seen no big differences between the four playlists overall, it makes sense that nearest neighbors might not be from the 'correct' playlist.
-
-#### Random forest
-```{r random forest}
-forest_model <-
-  rand_forest() %>%
-  set_mode("classification") %>% 
-  set_engine("ranger", importance = "impurity")
-
-toptracks_forest <- 
-  workflow() %>% 
-  add_recipe(toptracks_recipe_all) %>% 
-  add_model(forest_model) %>% 
-  fit_resamples(
-    toptracks_cv, 
-    control = control_resamples(save_pred = TRUE)
-  )
-toptracks_forest_top <- 
-  workflow() %>% 
-  add_recipe(toptracks_recipe_top) %>% 
-  add_model(forest_model) %>% 
-  fit_resamples(
-    toptracks_cv, 
-    control = control_resamples(save_pred = TRUE)
-  )
-
-# toptracks_forest %>% get_conf_mat() %>% autoplot(type = "mosaic")
-toptracks_forest %>% get_conf_mat() %>% 
-  autoplot(type = "heatmap") + 
-  labs(subtitle = "Confusion matrix for all features \nwith a random forest classifier") +
-  scale_fill_viridis_c(limits = c(2, 30), direction = -1, guide = "none", option = "inferno") +
-  theme_mine +
-  theme(panel.grid = element_blank(), 
-        panel.border = element_blank(),
-        axis.ticks = element_blank())
-knitr::kable(toptracks_forest %>% get_pr(), 
-             format = "html", 
-             table.attr = "style='width:30%;'")
-
-toptracks_forest_top %>% get_conf_mat() %>% 
-  autoplot(type = "heatmap") + 
-  labs(subtitle = "Confusion matrix for the top features \nwith a random forest classifier") +
-  scale_fill_viridis_c(limits = c(2, 30), direction = -1, guide = "none", option = "inferno") +
-  theme_mine +
-  theme(panel.grid = element_blank(), 
-        panel.border = element_blank(),
-        axis.ticks = element_blank())
-knitr::kable(toptracks_forest_top %>% get_pr(), 
-             format = "html", 
-             table.attr = "style='width:30%;'")
-```
-
-The random forest classifiers perform much better. However, they are still not satisfactory and their results might even be considered insignificant. The second random forest classifier does seem to perform *somewhat* better than the first. The second only considers the following features: tempo, A, and all timbre features except c01 and c04. The plot below shows that these selected features indeed are more important than others.
-
-```{r feature importance}
-workflow() %>% 
-  add_recipe(toptracks_recipe_all) %>% 
-  add_model(forest_model) %>% 
-  fit(toptracks_features) %>% 
-  pluck("fit", "fit", "fit") %>%
-  ranger::importance() %>% 
-  enframe() %>% 
-  mutate(name = fct_reorder(name, value)) %>% 
-  ggplot(aes(name, value, fill = value)) + 
-  scale_fill_viridis_c(limits = c(1.5, 5.5), guide = "none", option = "inferno") +
-  geom_col() + 
-  coord_flip() +
-  scale_y_continuous(expand = expansion(0.015)) +
-  theme_mine +
-  labs(subtitle = "Importance of features for a random forest classifier", x = NULL, y = NULL) +
-  theme(panel.grid.minor.x = element_blank(),
-        panel.border = element_blank(),
-        axis.ticks = element_blank())
-```
-
-
-
-<!-- volgorde nog aanpassen -->
-
-
+Prologue
+==================
 
 ### Just an average girl?
 
-The corpus I am going to analyze consists of four playlists: **my Top Tracks of 2019**, **my Top Tracks of 2020**, the **Top Tracks NL of 2019** and the **Top Tracks NL of 2020**. These playlists are respectively representative of the following groups I will be comparing: my taste in music in 2019, my taste in music in 2020, the average Dutch taste in music in 2019, and the average Dutch taste in music in 2020.
-In this portfolio, I want to find an answer to the following questions:
+My initial corpus consisted of my Top Tracks of 2019 and 2020 and the Top Tracks NL of 2019 and 2020. I wanted to analyze how 'average' my taste in music was, and how it changed during the COVID-19 pandemic. Due to the **social distancing measures** I did not listen to music in any social setting, such as hanging out with friends, clubbing, or even working out at the gym.
 
-<span style="color: black;">
-**1. How did my taste in music in 2020 differ from 2019? (comparison between group 1 and 2)**
+After seven weeks of homework assignments, disappointing results and hence disappointing data visualizations, I decided to change my corpus. The Top Tracks NL playlists were too 'general' to really capture any meaning or essence of 'the average Dutch taste in music'.
 
-**2. How did the average Dutch taste in music in 2020 differ from 2019? (comparison between group 3 and 4)**
+### A clean slate
 
-**3. How average was my taste in music in 2019? (comparison between group 1 and 3)**
+My new corpus consists of 510 tracks from 7 playlists in total. I still use my Top Tracks of 2019 and 2020, but I have added my own 2021 playlist. This way, 2019 represents the pre-pandemic situation and 2021 represent the one-year mark. The other four playlists are playlists of the NL top tracks of 2020, but one for each of the following genres: pop, dance, hip-hop/R&B and indie/rock. These genre playlists are shown below.
 
-**4. How average was my taste in music in 2020? (comparison between group 2 and 4)**
-</span>
+<iframe src="https://open.spotify.com/embed/playlist/37i9dQZF1DX6gRTxU4AfAv" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+<iframe src="https://open.spotify.com/embed/playlist/37i9dQZF1DX0W5G2DBOR2F" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+<iframe src="https://open.spotify.com/embed/playlist/37i9dQZF1DX6rJpshxuzGT" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+<iframe src="https://open.spotify.com/embed/playlist/37i9dQZF1DWYeyJxik6dE1" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
 
-I find it very interesting to analyze these comparisons, especially in light of the coronavirus pandemic. Due to the **social distancing measures** I did not listen to music in any social setting, such as hanging out with friends, clubbing, or even working out at the gym. My hypothesis is that my taste in music was therefore *less* average in 2020 than it was in 2019.
+With this clean slate, I want to analyze the following:
+**1. In terms of genre, how can my taste in music best be described?**
+**2. How has my taste in music evolved during the COVID-19 pandemic?**
 
-Evidently, my corpus is representative for the groups I want to compare, because it actually consists of those groups. However, I do have to remark that a Top Tracks NL playlist might not be representative of 'the average'. It just contains those tracks that were listened to most often, possibly only within a certain demographic. Whether I belong to this demographic, I cannot say; there seems no information to be found about this anywhere on the internet.
+It is important to note that the playlists do not contain the same amount of tracks. The four genre playlists each contain 50 tracks. My 2019 and 2020 playlists contain 100 tracks and my 2021 playlist contains 110 tracks. I deciced not to take out the extra 10, because there was no satisfactory objective way of doing so.
 
-My personal Top Tracks playlists also need a sidenote or two. First, I do not have a **premium Spotify account**, which means I get a limited amount of skips per hour and most playlists can only be played on shuffle. It might be that a song ended up a Top Track because it was in a playlist I listened to a lot, not because I liked that song so much. However, these limitations only apply when listening to Spotify on my phone. The desktop version of Spotify *does* allow for infinite skips and the freedom to choose songs manually, put songs in the waiting list, and play a playlist on shuffle or in order. 
+It is also important to note that my 2021 playlist is the *only* playlist I have compiled myself, the others were compiled by Spotify. It might be the case that Spotify biases the playlists by including certain --possibly sponsored-- songs. Although I do not consider this plausible, it is important to keep in mind.
 
-Moreover, Spotify might be biasing playlists by including certain --possibly sponsored-- songs. Also, shuffle might not be completely random, playing **popular or sponsored songs** first. This way, I would be exposed to more popular songs, which might influence my Top Tracks, possibly making it more average.
+More plausible is the possibility of my personal Top Tracks playlists being biased, for different reasons however. First, I do not have a premium Spotify account, which means I get a limited amount of skips per hour and most playlists can only be played on shuffle. It might be that a song ended up a Top Track because it was in a playlist I listened to a lot, not because I liked that song so much. This limitation, however, only applies when listening to Spotify on my phone. The desktop version of Spotify *does* allow for infinite skips and the freedom to choose songs manually, put songs in the waiting list, and play a playlist on shuffle or in order. 
 
-A great example is **"Stuck with U" by Ariana Grande and Justin Bieber**. It is one of my Top Tracks of 2020. It used to be in a lot of different playlists I listened to at the time. And yes, I liked that song, but nevertheless, I am fairly sure there were other songs I liked more in 2020. I definitely consider this song atypical for the group 'my taste in music in 2020'.
+A great example of a dubious song is **"Stuck with U" by Ariana Grande and Justin Bieber**. It is one of my Top Tracks of 2020. It used to be in a lot of different playlists I listened to at the time. And yes, I liked that song, but nevertheless, I am fairly sure there were other songs I liked more in 2020. I definitely consider this song atypical for my taste in music in 2020.
 
-A song I consider very typical for my taste in music in 2019 is **"Drive and Disconnect" by Nao**. I remember listening to this song on repeat when I discovered it, but also for a longer time after that. And even a few months later I rediscovered this song, and fell in lover all over again. Even now, it is still one of my favorite songs.
+<iframe src="https://open.spotify.com/embed/track/4HBZA5flZLE435QTztThqH" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
 
-While browsing the API Reference, I found the following variables that seem interesting to analyze: genres, artists, popularity, danceability, energy, valence, speechiness, instrumentalness, key, mode, tempo.
+Contrarily, a song I consider very typical for my taste is **"Drive and Disconnect" by Nao**. I remember listening to this song on repeat when I discovered it early 2019, but also for a longer time after that. And even a few months later I rediscovered this song, and fell in love all over again. Even now, it is still one of my favorite songs.
 
-<!-- Feedback: How many songs are in each of the playlists? -->
-
-
+<iframe src="https://open.spotify.com/embed/track/6pEAd0UjznaKABT7WLLvmC" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
 
 
-### (No) time to relax
 
-```{r mood plot}
-ggplotly(ggplot(toptracks50,
-       aes(
-         x = valence,
-         y = energy,
-         color = year,
-         label = track.name
-       )
-      ) +
-  geom_point(alpha = 0.4) +
+A good first impression {.storyboard}
+==================
+
+### <font size="4"> An emotional analysis of the lockdown: (no) time to relax </font>
+
+```{r mood plot, fig.align="center"}
+ggplotly(ggplot(
+    corpus,
+    aes(x = valence,
+        y = energy,
+        color = valence + energy,
+        label = track.name)) +
+  geom_point(alpha = 0.5) +
+  scale_color_viridis(guide = "none", option = "inferno") +
+
   geom_segment(
-    data = toptracks_stats, 
-    aes(
-      x = valence, 
-      y = energy-energy_sd, 
-      xend = valence, 
-      yend = energy+energy_sd,
-      alpha = 0.8
-      )
-    ) +
+    data = corpus_stats, 
+    aes(x = valence, 
+        y = energy-energy_sd, 
+        xend = valence, 
+        yend = energy+energy_sd)) +
   geom_segment(
-    data = toptracks_stats, 
-    aes(
-      x = valence-valence_sd, 
-      y = energy, 
-      xend = valence+valence_sd, 
-      yend = energy,
-      alpha = 0.8
-      )
-    ) +
+    data = corpus_stats, 
+    aes(x = valence-valence_sd, 
+        y = energy, 
+        xend = valence+valence_sd, 
+        yend = energy)) +
   geom_point(
-    data = toptracks_stats,
-    shape = 15,
-    size = 3,
-    alpha = 0.8
-    ) +
-    
+    data = corpus_stats,
+    size = 2.5) +
+
   scale_x_continuous(breaks=seq(0,1,0.25)) +
   scale_y_continuous(breaks=seq(0,1,0.25)) +
-  facet_wrap(~category) +
-  labs(
-    x = "Valence",
-    y = "Energy"
-  ) +
-  theme_mine
-)
-```
-
-```{r mood plot densities, include=FALSE}
-# Playlists
-grid.arrange(
-  ggplot(
-    toptracks50,
-    aes(x = valence,
-        color = playlist,
-        fill = playlist)) +
-    geom_density(alpha = 0.3) +
-    facet_grid(.~year) +
-    theme_light() +
-    theme(axis.title.x = element_blank(), legend.position = "none"),
-  
-  ggplot() + theme(panel.background = element_blank()),
-  
-  ggplot(toptracks50,
-         aes(
-           x = valence,
-           y = energy,
-           color = playlist,
-           label = track.name
-         )
-        ) +
-    geom_point(alpha = 0.5, show.legend = FALSE) +
-    facet_grid(category~year) +
-    theme_light() +
-    theme(legend.position = "none"),
-  
-  ggplot(
-    toptracks50,
-    aes(x = energy,
-        color = playlist,
-        fill = playlist)) +
-    geom_density(alpha = 0.3) +
-    facet_grid(category~.) +
-    coord_flip() +
-    theme_light() +
-    theme(axis.title.y = element_blank()),
-  
-  ncol=2, nrow=2, widths=4:3, heights=1:2
-)
-
-# Categories
-grid.arrange(
-  ggplot(
-    toptracks50,
-    aes(x = valence,
-        color = category,
-        fill = category)) +
-    geom_density(alpha = 0.3) +
-    theme_light() +
-    theme(axis.title.x = element_blank(), legend.position = "none"),
-  
-  ggplot() + theme(panel.background = element_blank()),
-  
-  ggplot(
-    toptracks50,
-    aes(
-      x = valence,
-      y = energy,
-      color = category,
-      label = track.name
-    )
-  ) +
-    geom_point(alpha = 0.5, show.legend = FALSE) +
-    theme_light(),
-  
-  ggplot(
-    toptracks50,
-    aes(x = energy,
-        color = category,
-        fill = category)) +
-    geom_density(alpha = 0.3) +
-    coord_flip() +
-    theme_light() +
-    theme(axis.title.y = element_blank()),
-  
-  ncol=2, nrow=2, widths=4:3, heights=1:2
-)
-
-# Years
-grid.arrange(
-  ggplot(
-    toptracks50,
-    aes(x = valence,
-        color = year,
-        fill = year)) +
-    geom_density(alpha = 0.3) +
-    theme_light() +
-    theme(axis.title.x = element_blank(), legend.position = "none"),
-  
-  ggplot() + theme(panel.background = element_blank()),
-  
-  ggplot(
-    toptracks50,
-    aes(
-      x = valence,
-      y = energy,
-      color = year,
-      label = track.name
-    )
-  ) +
-    geom_point(alpha = 0.5, show.legend = FALSE) +
-    theme_light(),
-  
-  ggplot(
-    toptracks50,
-    aes(x = energy,
-        color = year,
-        fill = year)) +
-    geom_density(alpha = 0.3) +
-    coord_flip() +
-    theme_light() +
-    theme(axis.title.y = element_blank()),
-  
-  ncol=2, nrow=2, widths=4:3, heights=1:2
-)
-```
-
-```{r mood plot 2d density, include=FALSE}
-ggplot(toptracks50,
-       aes(
-         x = valence,
-         y = energy,
-         label = track.name
-       )
-) +
-  stat_density_2d(
-    geom = "polygon", 
-    aes(alpha = ..level.., fill = playlist),
-    bins = 5,
-    show.legend = FALSE) +
-  geom_point(
-    aes(color = playlist), 
-    show.legend = FALSE) +
-  facet_grid(category~year) +
-  theme_light()
-
-
-ggplot(toptracks50,
-       aes(
-         x = valence,
-         y = energy,
-         # color = playlist,
-         label = track.name
-       )
-) +
-  geom_point(
-    aes(color = playlist, alpha = 0.3), 
-    show.legend = FALSE) +
-  stat_density_2d(
-    aes(color = playlist),
-    bins = 4
-    ) +
-  facet_grid(category~year) +
-  theme_light()
-
-
-ggplot(toptracks50,
-       aes(
-         x = valence,
-         y = energy,
-         color = playlist,
-         label = track.name
-       )
-) +
-  geom_point(
-    aes(alpha = 0.3), 
-    show.legend = FALSE) +
-  stat_ellipse(
-    type = "t",
-    linetype = 3) +
-  facet_grid(category~year) +
-  theme_light()
-```
-
-***
-#### An energy-valence scatter plot
-<!-- Typical My 2020: ... -->
-<!-- Typical NL 2020: ... -->
-<!-- Typical because in the middle of the plot () -->
-
-
-### (No) time to dance
-```{r dance plot}
-ggplotly(ggplot(toptracks50,
-       aes(
-         x = tempo,
-         y = danceability,
-         color = year,
-         label = track.name
-       )
-      ) +
-  geom_point(alpha = 0.4) +
-  geom_segment(
-    data = toptracks_stats, 
-    aes(
-      x = tempo, 
-      y = danceability-danceability_sd, 
-      xend = tempo, 
-      yend = danceability+danceability_sd,
-      alpha = 0.8
-      )
-    ) +
-  geom_segment(
-    data = toptracks_stats, 
-    aes(
-      x = tempo-tempo_sd, 
-      y = danceability, 
-      xend = tempo+tempo_sd, 
-      yend = danceability,
-      alpha = 0.8
-      )
-    ) +
-  geom_point(
-    data = toptracks_stats,
-    shape = 15,
-    size = 3,
-    alpha = 0.8
-    ) +
-  
-  scale_x_continuous(breaks=seq(20,220,40)) +
-  scale_y_continuous(breaks=seq(0.1,1,0.2)) +
-  
-  facet_wrap(~category) +
-  labs(
-    x = "Tempo (bpm)",
-    y = "Danceability"
-  ) +
-  theme_mine
+  facet_wrap(~playlist) +
+  labs(x = "Valence",
+       y = "Energy",
+       title = "Scatter plot of energy versus valence",
+       subtitle = "with mean and SD per playlist") +
+  theme_mine,
+  width = 800
 )
 ```
 
 ***
-#### A danceability-tempo scatter plot
-<!-- Typical My 2020: Cash -->
-<!-- Typical NL 2020: Loop Niet Weg -->
-<!-- Typical because in the middle of the danceability-tempo plot (tempo = 100 bpm, danceability = 0.67) -->
-<!-- AND both in top 20 of playlist -->
+Here comes the analysis
 
 
+### **knaldrag** [knal-drang] *noun* -- The intense desire to go out, to party, to dance.
 
-### Observations
-
-#### Valence versus Energy
-
-```{r valence density}
+```{r dance plot, fig.align="center"}
 ggplotly(ggplot(
-  toptracks,
-  aes(x = valence,
-      color = playlist,
-      fill = playlist)) +
-  geom_density(alpha = 0.3) +
-  geom_vline(aes(xintercept = mean(valence)), 
-             alpha = 0.5) +
-  geom_vline(data = toptracks_stats, 
-             aes(xintercept = valence, color = playlist),
-             linetype = "dashed") +
-  
-  geom_text(data = toptracks_stats,
-    aes(x = valence+0.09,
-        y = 0.5,
-        label = "mean")
-  ) +
-  
-  facet_grid(category~year) +
-  
-  labs(x = "Valence", y = "Density") +
-  theme_mine +
-  theme(
-    axis.text.y = element_blank(),
-    axis.ticks.y = element_blank(),
-    panel.grid.major.y = element_blank(),
-    panel.grid.minor.y = element_blank(),
-    panel.border = element_blank(),
-    legend.position = "none"
-  )
-  , width = 800
-)
-```
+    corpus,
+    aes(x = tempo,
+        y = danceability,
+        color = tempo * danceability,
+        label = track.name)) +
+  geom_point(alpha = 0.5) +
+  scale_color_viridis(guide = "none", option = "inferno") +
 
-- Valence in Top Tracks NL 2019 is very nicely and equally distributed, unlike Top Tracks NL 2020. In fact, Top Tracks NL 2020 seems to have the inverted valence distribution of my Top Tracks playlists.
+  geom_segment(
+    data = corpus_stats, 
+    aes(x = tempo, 
+        y = danceability-danceability_sd, 
+        xend = tempo, 
+        yend = danceability+danceability_sd)) +
+  geom_segment(
+    data = corpus_stats, 
+    aes(x = tempo-tempo_sd, 
+        y = danceability, 
+        xend = tempo+tempo_sd, 
+        yend = danceability)) +
+  geom_point(
+    data = corpus_stats,
+    size = 2.5) +
 
-```{r energy density}
-ggplotly(ggplot(
-  toptracks,
-  aes(x = energy,
-      color = playlist,
-      fill = playlist)) +
-  geom_density(alpha = 0.3) +
-  geom_vline(aes(xintercept = mean(energy)), 
-             alpha = 0.5) +
-  geom_vline(data = toptracks_stats, 
-             aes(xintercept = energy, color = playlist),
-             linetype = "dashed") +
-  
-  geom_text(data = toptracks_stats,
-    aes(x = 0.73,
-        y = 0.7,
-        label = "mean")
-  ) +
-  facet_grid(category~year) +
-  
-  labs(x = "Energy", y = "Density") +
-  theme_mine +
-  theme(
-    axis.text.y = element_blank(),
-    axis.ticks.y = element_blank(),
-    panel.grid.major.y = element_blank(),
-    panel.grid.minor.y = element_blank(),
-    panel.border = element_blank(),
-    legend.position = "none"
-  )
-)
-```
-
-- Energy: In both categories of 2019, there is a bump around 0.7. They also spread out downward quite equally. The NL Top Tracks of 2020 seems to be the odd one out (again); energy was quite *lower* on average and more spread out. The mode, however, was somewhat *higher* than the bumps of the other playlists.
-
-#### Tempo versus Danceability
-
-```{r tempo density}
-ggplotly(ggplot(
-  toptracks,
-  aes(x = tempo,
-      color = playlist,
-      fill = playlist)) +
-  geom_density(alpha = 0.3) +
-  geom_vline(aes(xintercept = mean(tempo)), 
-             alpha = 0.5) +
-  geom_vline(data = toptracks_stats, 
-             aes(xintercept = tempo, color = playlist),
-             linetype = "dashed") +
-    
-  geom_text(data = toptracks_stats,
-    aes(x = 130,
-        y = 0.022,
-        label = "mean")
-  ) +
-    
   scale_x_continuous(breaks=seq(20,220,40)) +
-  facet_grid(category~year) +
-    
-  labs(x = "Tempo (bpm)", y = "Density") +
-  theme_mine +
-  theme(
-    axis.text.y = element_blank(),
-    axis.ticks.y = element_blank(),
-    panel.grid.major.y = element_blank(),
-    panel.grid.minor.y = element_blank(),
-    panel.border = element_blank(),
-    legend.position = "none"
-  )
-  , width = 800
+  # scale_y_continuous(breaks=seq(0,1,0.25)) +
+  facet_wrap(~playlist) +
+  labs(x = "Tempo (bpm)",
+       y = "Danceability",
+       title = "Scatter plot of danceability versus tempo",
+       subtitle = "with mean and SD per playlist") +
+  theme_mine,
+  width = 800
 )
 ```
 
-- The tempo distribution in 2019 was pretty much the same in both categories, both peaking at 100 bpm. The peak tempo of My Top Tracks of 2020 has shifted upwards to 105 bpm. The NL Top Tracks of 2020 is totally different form the rest, with no real peaks, and more spread out to lower (90) and higher (120) bpm's. The reference lines for the means clearly show that there was a decrease in tempo between the NL Top Tracks of 2019 and 2020.
+***
+My playlists all seem to have a cluster around 100 bpm. The same holds for the genres hip-hop/R&B and pop. (Notice that all of their means are slightly higher, since they spread out more to the right.) Indie/rock is clustered more around 120 bpm, and dance even more so.
 
-```{r danceability density}
+The average danceabilities of my playlists lie between 0.6 and 0.9. The means, of about 0.7 confirm this. Dance tracks from about 0.5 to 0.9, also with a mean of 0.7. Not surprisingly, pop and indie/rock tracks have a somewhat lower danceability. Hip-hop/R&B tracks, however, have a slightly higher danceability.
+
+
+### It's in the minor details of this major pandemic
+
+```{r mode barplot, fig.align="center"}
 ggplotly(ggplot(
-  toptracks,
-  aes(x = danceability,
-      color = playlist,
-      fill = playlist)) +
-  geom_density(alpha = 0.3) +
-  geom_vline(aes(xintercept = mean(danceability)), 
-             alpha = 0.5) +
-  geom_vline(data = toptracks_stats, 
-             aes(xintercept = danceability, color = playlist),
-             linetype = "dashed") +
-  
-  geom_text(data = toptracks_stats,
-    aes(x = danceability+0.07,
-        y = 1,
-        label = "mean")
-  ) +
-  scale_x_continuous(breaks=seq(0.1,1,0.2)) +
-  facet_grid(category~year) +
-  
-  labs(x = "Danceability", y = "Density") +
+  corpus,
+  aes(x = playlist,
+      fill = mode_name)) +
+  geom_bar(position = "fill", alpha = 0.75) +
+
+  scale_y_continuous(labels = scales::percent) +
+  labs(x = NULL, y = NULL, title = "Distribution of modes across playlists") +
   theme_mine +
-  theme(
-    axis.text.y = element_blank(),
-    axis.ticks.y = element_blank(),
-    panel.grid.major.y = element_blank(),
-    panel.grid.minor.y = element_blank(),
-    panel.border = element_blank(),
-    legend.position = "none"
-  )
-  , width = 800
+  theme(panel.grid.major.x = element_blank()),
+  width = 800
 )
 ```
 
-- Danceability: My taste in music has remained somewhat constant, with the bumps of My Top Tracks of 2019 and My Top Tracks of 2020 both at around 0.75, though the overall distribution is more spread out in 2020 and the mean has slightly decreased. Unlike the other plots, this plot shows that, with respect to danceability, playlists are more similar when grouping by year than they are when grouping by category (personal versus NL). Not only do the shapes look more similar, the mean dancibilities seem to follow the same trend as well; the mean dancibility was slightly lower in 2020 than in 2019. This could be explained by the fact that, due to social distancing measures, there were less occasions to dance. As a result, artists also made less music *to dance to*.
-
-#### Mode
-
-```{r mode barplot}
-ggplotly(ggplot(
-  toptracks50,
-  aes(
-    x = year,
-    fill = mode_name,
-    alpha = 0.95
-    )
-  ) +
-  geom_bar(position = "stack") +
-  
-  facet_wrap(~category) +
-  labs(x = NULL, y = "Number of tracks") +
-  theme_mine +
-  theme(panel.grid.major.x = element_blank())
-  , width = 800
-)
-```
-
+***
 My Top Tracks playlists clearly count more minor modes (64%) than the NL Top Tracks playlists (49%). Also, there is a slight increase in minor tracks in 2020 as opposed to 2019.
 
+It is immediately apparent that the indie/rock and pop playlists contain relatively more major than minor tracks, as opposed to the other playlists. Also, my 2021 tracks are more likely to be in minor mode than my Top Tracks of 2019 or 2020. As in the energy-valence visualization, this might indicate that my taste in music has slightly shifted towards R&B.
 
 
+
+Getting on track {.storyboard}
+==================
 
 ```{r gram setup}
-# Sober: 7iHAue5izVmII1Z6Q1xy7B
-# Sweetie Odo: 2UAl2nzSixQviGw0XJvJgY
 sweetie <-
   get_tidy_audio_analysis("2UAl2nzSixQviGw0XJvJgY") %>%  # Change URI.
   compmus_align(bars, segments) %>%                      # Change `bars`
   select(bars) %>%                                       #   in all three
   unnest(bars) %>%                                       #   of these lines.
-  mutate(
-    pitches =
-      map(segments,
-        compmus_summarise, pitches,
-        method = "mean", norm = "euclidean"              # Change summary & norm.
-      )
-  ) %>%
-  mutate(
-    timbre =
-      map(segments,
-        compmus_summarise, timbre,
-        method = "rms", norm = "euclidean"               # Change summary & norm.
-      )
-  )
+  mutate(pitches = map(
+    segments, compmus_summarise, pitches,
+    method = "mean", norm = "euclidean"              # Change summary & norm.
+      )) %>%
+  mutate(timbre = map(
+    segments, compmus_summarise, timbre,
+    method = "rms", norm = "euclidean"               # Change summary & norm.
+    ))
 sweetie_sec <-
   get_tidy_audio_analysis("2UAl2nzSixQviGw0XJvJgY") %>%  # Change URI.
   compmus_align(sections, segments) %>%                      # Change `bars`
   select(sections) %>%                                       #   in all three
   unnest(sections) %>%                                       #   of these lines.
-  mutate(
-    pitches =
-      map(segments,
-        compmus_summarise, pitches,
-        method = "mean", norm = "euclidean"              # Change summary & norm.
-      )
-  ) %>%
-  mutate(
-    timbre =
-      map(segments,
-        compmus_summarise, timbre,
-        method = "rms", norm = "euclidean"               # Change summary & norm.
-      )
-  )
+  mutate(pitches = map(
+    segments, compmus_summarise, pitches,
+    method = "mean", norm = "euclidean"              # Change summary & norm.
+    )) %>%
+  mutate(timbre = map(
+    segments, compmus_summarise, timbre,
+    method = "rms", norm = "euclidean"               # Change summary & norm.
+    ))
 ```
 
-### Repetitive chord progressions and vocal 'blocks'
+### Repetitive chord progressions and vocal 'blocks' {data-commentary-width=300}
+
 ```{r chromagrams bars and sections}
 bind_rows(
   sweetie %>% 
-    compmus_gather_chroma() %>% 
-    mutate(type = "Bars"),
+    compmus_gather_chroma() %>% mutate(type = "Bars"),
   sweetie_sec %>% 
-    compmus_gather_chroma() %>% 
-    mutate(type = "Sections")
-) %>%
-  mutate() %>%
-  ggplot(
-    aes(
-      x = start + duration / 2,
-      width = duration,
-      y = pitch_class,
-      fill = value
-    )
-  ) +
+    compmus_gather_chroma() %>% mutate(type = "Sections")
+  ) %>%
+  mutate() %>% ggplot(
+    aes(x = start + duration / 2,
+        width = duration,
+        y = pitch_class,
+        fill = value)) +
   geom_tile() +
   scale_x_continuous(breaks=seq(0,155,30)) +
-  scale_fill_viridis_c(guide = "none", option = "inferno") +
+  scale_fill_viridis_c("Magnitude", option = "inferno") +
   facet_wrap(~type) +
-  labs(x = "Time (s)", y = NULL, fill = "Magnitude") +
+  labs(x = "Time (s)", y = NULL, 
+       title = "Chromagrams", 
+       subtitle = "'Sweetie Odo' by Juls featuring Sway Clarke") +
   theme_mine +
-  theme(
-    panel.grid.major.x = element_blank(),
-    panel.grid.major.y = element_blank(),
-    panel.border = element_blank()
-    )
+  theme(legend.title = element_text(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.border = element_blank())
 ```
 
 ***
-#### Chromagrams per bar and per section
-###### "Sweetie Odo" by Juls featuring Sway Clarke
+<iframe src="https://open.spotify.com/embed/track/2UAl2nzSixQviGw0XJvJgY" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+
 This song was a typical Top Track of mine in 2020 (see song info). In the bars chromagram, you can clearly see the repetitive chord progression throughout the song -- the skips from C to A to G. The sections chromagram clearly shows bright 'blocks' at D and C. The D-blocks represent the chorus vocals and the C-block represents the vocals in the bridge. The first few blocks at G, F and D represent the intro.
 
+I think the overall look of these chromagrams are very representative of the tracks I generally listen to. Speaking from a music theoretic point of view, most songs have a standard verse-chorus structure (as shown by the the sections chromagram) and simple melodies and harmonies (as shown by the bars chromagram).
+
 ##### Song info
-Under construction
-| Feature        | Average                            | "Sweetie Odo" |
-|----------------|------------------------------------|---------------|
-| Key            |`r mode(my2020$key_name)`           | G Minor
-<!-- | Length         |`r mean(my2020$track.duration_ms)`  | 2:35 -->
-| BPM            |`r mean(my2020$tempo)`               | 100
-| Time Signature |`r median(my2020$time_signature)`   | 4/4
+Feature        | Average in 2020                         | "Sweetie Odo" 
+---------------|-----------------------------------------|--------------
+Time Signature | `r median(my2020$time_signature)`       | 4
+BPM            | `r round(mean(my2020$tempo), 2)`        | 100
+Energy         | `r round(mean(my2020$energy), 2)`       | 0.49
+Valence        | `r round(mean(my2020$valence), 2)`      | 0.53
+Danceability   | `r round(mean(my2020$danceability), 2)` | 0.84
 
 
 
-### Different sounds in different sections
-```{r cepstograms bars and sections}
+### Different sounds in different sections {data-commentary-width=300}
+```{r cepstrograms bars and sections}
 bind_rows(
   sweetie %>% 
-    compmus_gather_timbre() %>% 
-    mutate(type = "Bars"),
+    compmus_gather_timbre() %>% mutate(type = "Bars"),
   sweetie_sec %>% 
-    compmus_gather_timbre() %>% 
-    mutate(type = "Sections")
+    compmus_gather_timbre() %>% mutate(type = "Sections")
 ) %>%
-  mutate() %>%
-  ggplot(
-    aes(
-      x = start + duration / 2,
-      width = duration,
-      y = basis,
-      fill = value
-    )
-  ) +
+  mutate() %>% ggplot(
+    aes(x = start + duration / 2,
+        width = duration,
+        y = basis,
+        fill = value)) +
   geom_tile() +
   scale_x_continuous(breaks=seq(0,155,30)) +
-  scale_fill_viridis_c(guide = "none", option = "inferno") +
+  scale_fill_viridis_c("Magnitude", option = "inferno") +
   facet_wrap(~type) +
-  labs(x = "Time (s)", y = NULL, fill = "Magnitude") +
+  labs(x = "Time (s)", y = NULL,
+       title = "Cepstrograms",
+       subtitle = "'Sweetie Odo' by Juls featuring Sway Clarke") +
   theme_mine +
-  theme(
-    panel.grid.major.x = element_blank(),
-    panel.grid.major.y = element_blank(),
-    panel.border = element_blank()
-  )
+  theme(legend.title = element_text(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.border = element_blank())
 ```
 
 ***
-#### Cepstograms per bar and per section
-###### "Sweetie Odo" by Juls featuring Sway Clarke
-This song was a typical Top Track of mine in 2020 (see song info). Both cepstograms clearly show the intro and outro in c03. The verses are also brighter in c03. The chorus sections, however, light up in c05. I wonder what this means. The second chorus also lights up in c02, but the first chorus not so much.
+<iframe src="https://open.spotify.com/embed/track/2UAl2nzSixQviGw0XJvJgY" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+
+This song was a typical Top Track of mine in 2020 (see song info). Both cepstrograms clearly show the intro and outro in the third timbre component. The verses are also brighter in c03. The chorus sections, however, light up in c05. I wonder what this component represents. The second timbre component most clearly shows the bridge and the choruses somewhat.
+
+What is most representative about this song, and clearly visualized in these cepstrograms, is that most songs I listen to have an intro and outro. Also, I believe I do not listen to many songs where the loudness -- the first timbre component -- changes a lot.
 
 ##### Song info
-Under construction
-
+Feature        | Average in 2020                         | "Sweetie Odo" 
+---------------|-----------------------------------------|--------------
+Time Signature | `r median(my2020$time_signature)`       | 4
+BPM            | `r round(mean(my2020$tempo), 2)`        | 100
+Energy         | `r round(mean(my2020$energy), 2)`       | 0.49
+Valence        | `r round(mean(my2020$valence), 2)`      | 0.53
+Danceability   | `r round(mean(my2020$danceability), 2)` | 0.84
 
 
 
@@ -935,61 +393,39 @@ bind_rows(
   coord_fixed() +
   facet_wrap(~type) +
   scale_fill_viridis_c(guide = "none", option = "inferno") +
-  labs(x = NULL, y = NULL) +
+  labs(x = NULL, y = NULL,
+       title = "Self-similarity matrices for chroma and timbre",
+       subtitle = "'Sweetie Odo' by Juls featuring Sway Clarke") +
   theme_mine +
   theme(panel.border = element_blank())
 ```
 
 ***
-#### Self-similarity matrices for chroma and timbre
-###### "Sweetie Odo" by Juls featuring Sway Clarke
-The chroma matrix clearly shows the intro, verses (light strips), choruses (dark squares) and outro. The timbre matrix shows the outro even more clearly. Interestingly, the chroma of the outro resembles the verse's chroma. The dark square at the bottom-left corner of the timbre matrix shows the percussion coming in. In general, the clear timbre changes can be ascribed to changes or short pauses in the percussion, even the slight changes just before 60 and 120 seconds represent a short percussion break of about a bar.
+<iframe src="https://open.spotify.com/embed/track/2UAl2nzSixQviGw0XJvJgY" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
 
+The song has the following structure:
 
+Time (s) | Section     | Instrumentation
+-------- | ----------- | ----------
+0-9      | intro       | guitar
+10-19    | intro       | + percussion
+19-38    | intro       | + voice
+38-57    | chorus      |
+57-76    | post-chorus |
+76-96    | verse       |
+96-114   | bridge      |
+114-134  | chorus      |
+134-155  | post-chorus | - guitar
 
-### The key visualization
+Both matrices clearly show (parts of) the song's structure. The chroma matrix clearly shows the instrumental intro (first strip), the vocal intro, outro and verse (light strips), and the choruses with bridge (dark squares). It makes sense that both choruses are similar in pitch. Interestingly, the bridge resembles them. 
 
-```{r key histogram}
-ggplotly(
-  ggplot(
-    toptracks50, aes(
-      x = key_name,
-      fill = mode_name,
-      alpha = 0.95
-      )
-    ) +
-  geom_histogram(
-    stat = "count", 
-    position = "stack"         # or "dodge" or "fill"
-    ) +
-  facet_wrap(~year, ncol = 1) +
-  labs(
-    x = "Key",
-    y = "Number of tracks"
-  ) +
-  theme_mine +
-  theme(panel.grid.major.x = element_blank())
-)
-```
+Also interesting to see is that the second post-chorus is not similar to the first post-chorus. When you listen to the song, however, it *does* make a lot of sense; in the outro, the guitar stops playing.
 
-***
-I think there is not much interesting to be said about the distribution of the keys in my corpus -- maybe because my corpus is too small (200 tracks in total). When plotting different variables against each other, there was no plot that really stood out.
+The timbre matrix also clearly shows the outro, for the same reason actually. Timbre is partly determined by instrumentation, so it makes sense that the outro (without guitar) resembles no other part of the song (with guitar).
 
-The plot on the left shows the key distribution of 2019 versus 2020, taking the two modalities into account. The following changes can be seen over time:
+Notable is the dark square at the bottom-left corner of the timbre matrix. This represents the percussion coming in. In general, all squares in the timbre matrix can be ascribed to the homogeneity of the percussion. A new square indicates a change or short pause in the percussion -- even the slight changes just before 60 and 120 seconds represent a short percussion break of about a bar.
 
-- decrease in A minor;
-
-- increase in C major;
-
-- overall decrease in C#;
-
-- increase in F# minor, partly at the 'expense' of F# major;
-
-- big increase in G# major;
-
-- overall low presence of A#, D, D# and E;
-
-- absence of D minor and near-absence of D# major
+Also interesting, the vocal intro and the verse do not seem to be similar in pitch, but they do in timbre. The bridge and choruses, however, seem less similar in timbre than in pitch.
 
 
 
@@ -1084,8 +520,6 @@ key_templates <-
 ```
 
 ```{r chordogram setup}
-# 7MkcTLPvF3EiarKLYpX4zz
-# 0URAjyKMW6cGfW6oFMTh6k
 cash <-
   get_tidy_audio_analysis("0URAjyKMW6cGfW6oFMTh6k") %>%
   compmus_align(bars, segments) %>%
@@ -1152,52 +586,220 @@ Both songs have a very tropical vibe. It's interesting to see that, assuming the
 
 
 
+### The final chapter: ~~vaccination~~ classification
+<!-- The final judgment -->
 
-### Covid shows no tempo trend
+```{r classifier setup, eval=FALSE}
+get_conf_mat <- function(fit) {
+  outcome <- .get_tune_outcome_names(fit)
+  fit %>% 
+    collect_predictions() %>% 
+    conf_mat(truth = outcome, estimate = .pred_class)
+}  
 
-```{r tempo density 2}
-ggplotly(ggplot(
-  toptracks,
-  aes(x = tempo,
-      color = playlist,
-      fill = playlist)) +
-  geom_density(alpha = 0.3) +
-  geom_vline(aes(xintercept = mean(tempo)), 
-             alpha = 0.5) +
-  geom_vline(data = toptracks_stats, 
-             aes(xintercept = tempo, color = playlist),
-             linetype = "dashed") +
-    
-  geom_text(data = toptracks_stats,
-    aes(x = 130,
-        y = 0.022,
-        label = "mean")
-  ) +
-    
-  scale_x_continuous(breaks=seq(20,220,40)) +
-  facet_grid(category~year) +
-    
-  labs(x = "Tempo (bpm)", y = "Density") +
-  theme_mine +
-  theme(
-    axis.text.y = element_blank(),
-    axis.ticks.y = element_blank(),
-    panel.grid.major.y = element_blank(),
-    panel.grid.minor.y = element_blank(),
-    panel.border = element_blank(),
-    legend.position = "none"
-  )
-)
+get_pr <- function(fit) {
+  fit %>% 
+    conf_mat_resampled() %>% 
+    group_by(Prediction) %>% mutate(precision = Freq / sum(Freq)) %>% 
+    group_by(Truth) %>% mutate(recall = Freq / sum(Freq)) %>% 
+    ungroup() %>% filter(Prediction == Truth) %>% 
+    select(class = Prediction, precision, recall)
+}
+
+personal_features <-
+  bind_rows(my2019, my2020, my2021) %>%
+  add_audio_analysis() %>% 
+  mutate(
+    playlist = factor(playlist),
+    segments = map2(segments, key, compmus_c_transpose),
+    pitches =
+      map(
+        segments,
+        compmus_summarise, pitches,
+        method = "mean", norm = "manhattan"
+      ),
+    timbre =
+      map(
+        segments,
+        compmus_summarise, timbre,
+        method = "mean",
+      )
+  ) %>%
+  mutate(pitches = map(pitches, compmus_normalise, "clr")) %>%
+  mutate_at(vars(pitches, timbre), map, bind_rows) %>%
+  unnest(cols = c(pitches, timbre))
 ```
 
-***
+``` {r classifier recipe, eval=FALSE}
+personal_recipe_all <-
+  recipe(
+    playlist ~
+      danceability +
+      energy +
+      loudness +
+      speechiness +
+      acousticness +
+      instrumentalness +
+      liveness +
+      valence +
+      tempo +
+      duration +
+      C + `C#|Db` + D + `D#|Eb` +
+      E + `F` + `F#|Gb` + G +
+      `G#|Ab` + A + `A#|Bb` + B +
+      c01 + c02 + c03 + c04 + c05 + c06 +
+      c07 + c08 + c09 + c10 + c11 + c12,
+    data = personal_features,
+  ) %>%
+  step_center(all_predictors()) %>%
+  step_scale(all_predictors())      # Converts to z-scores.
 
-Unfortunately, my laptop cannot handle tempograms... Instead, I have made a density plot to compare the tempi in different playlists of my corpus.
+personal_recipe_top <-
+  recipe(
+    playlist ~
+      energy + tempo + duration + speechiness + 
+      c01 + c02,
+    data = personal_features,
+  ) %>%
+  step_center(all_predictors()) %>%
+  step_scale(all_predictors())      # Converts to z-scores.
 
-The tempo distribution in 2019 was pretty much the same in both categories, both peaking at 100 bpm. The peak tempo of My Top Tracks of 2020 has shifted upwards to 105 bpm. The NL Top Tracks of 2020 is totally different form the rest, with no real peaks, and more spread out to lower (90) and higher (120) bpm's. The reference lines for the means clearly show that there was a decrease in tempo between the NL Top Tracks of 2019 and 2020.
+personal_cv <- personal_features %>% vfold_cv(5)
+```
+
+#### k-nearest neighbor
+```{r k-Nearest Neighbor, eval=FALSE}
+knn_model <-
+  nearest_neighbor(neighbors = 1) %>%
+  set_mode("classification") %>% 
+  set_engine("kknn")
+personal_knn <- 
+  workflow() %>% 
+  add_recipe(personal_recipe_all) %>% 
+  add_model(knn_model) %>% 
+  fit_resamples(
+    personal_cv, 
+    control = control_resamples(save_pred = TRUE)
+  )
+personal_knn %>% get_conf_mat() %>% autoplot(type = "mosaic")
+personal_knn %>% get_conf_mat() %>% 
+  autoplot(type = "heatmap") + 
+  labs(subtitle = "Confusion matrix for all features \nwith a k-nearest neighbor classifier") +
+  scale_fill_viridis_c(begin = 0.3, direction = -1, guide = "none", option = "inferno") +
+  theme_mine +
+  theme(panel.grid = element_blank(), 
+        panel.border = element_blank(),
+        axis.ticks = element_blank())
+
+knitr::kable(personal_knn %>% get_pr(), 
+             format = "html", 
+             table.attr = "style='width:30%;'")
+```
+
+As can be seen in the confusion matrix above, the k-nearest neighbor classifier performs badly. However disappointing, this result is not surprising. Just as we have seen no big differences between the four playlists overall, it makes sense that nearest neighbors might not be from the 'correct' playlist.
+
+#### Random forest
+```{r random forest, eval=FALSE}
+forest_model <-
+  rand_forest() %>%
+  set_mode("classification") %>% 
+  set_engine("ranger", importance = "impurity")
+
+personal_forest <- 
+  workflow() %>% 
+  add_recipe(personal_recipe_all) %>% 
+  add_model(forest_model) %>% 
+  fit_resamples(
+    personal_cv, 
+    control = control_resamples(save_pred = TRUE)
+  )
+personal_forest_top <- 
+  workflow() %>% 
+  add_recipe(personal_recipe_top) %>% 
+  add_model(forest_model) %>% 
+  fit_resamples(
+    personal_cv, 
+    control = control_resamples(save_pred = TRUE)
+  )
+
+# personal_forest %>% get_conf_mat() %>% autoplot(type = "mosaic")
+personal_forest %>% get_conf_mat() %>% 
+  autoplot(type = "heatmap") + 
+  labs(subtitle = "Confusion matrix for all features \nwith a random forest classifier") +
+  scale_fill_viridis_c(begin = 0.3, direction = -1, guide = "none", option = "inferno") +
+  theme_mine +
+  theme(panel.grid = element_blank(), 
+        panel.border = element_blank(),
+        axis.ticks = element_blank())
+knitr::kable(personal_forest %>% get_pr(), 
+             format = "html", 
+             table.attr = "style='width:30%;'")
+
+personal_forest_top %>% get_conf_mat() %>% 
+  autoplot(type = "heatmap") + 
+  labs(subtitle = "Confusion matrix for the top features \nwith a random forest classifier") +
+  scale_fill_viridis_c(begin = 0.3, direction = -1, guide = "none", option = "inferno") +
+  theme_mine +
+  theme(panel.grid = element_blank(), 
+        panel.border = element_blank(),
+        axis.ticks = element_blank())
+knitr::kable(personal_forest_top %>% get_pr(), 
+             format = "html", 
+             table.attr = "style='width:30%;'")
+```
+
+The random forest classifiers perform much better. However, they are still not satisfactory and their results might even be considered insignificant. The second random forest classifier does seem to perform *somewhat* better than the first. The second only considers the following features: tempo, A, and all timbre features except c01 and c04. The plot below shows that these selected features indeed are more important than others.
+
+```{r feature importance, eval=FALSE}
+workflow() %>% 
+  add_recipe(personal_recipe_all) %>% 
+  add_model(forest_model) %>% 
+  fit(personal_features) %>% 
+  pluck("fit", "fit", "fit") %>%
+  ranger::importance() %>% 
+  enframe() %>% 
+  mutate(name = fct_reorder(name, value)) %>% 
+  ggplot(aes(name, value, fill = value)) + 
+  scale_fill_viridis_c(begin = 0.2, end = 0.9, direction = -1, guide = "none", option = "inferno") +
+  geom_col() + 
+  coord_flip() +
+  scale_y_continuous(expand = expansion(0.015)) +
+  theme_mine +
+  labs(subtitle = "Importance of features for a random forest classifier", x = NULL, y = NULL) +
+  theme(panel.grid.minor.x = element_blank(),
+        panel.border = element_blank(),
+        axis.ticks = element_blank())
+```
 
 
 
+
+Epilogue
+==================
+
+### 1. In terms of genre, how can my taste in music best be described?
+
+### 2. How has my taste in music evolved during the COVID-19 pandemic?
+
+### Outlook
+I have started listening to more Dutch music.
+Whether I have seasonal preferences. I can imagine the following seasonal pattern:
+
+Time of the year | Winter  | Summer
+---------------- | ------- | -------------
+Energy-valence   | relaxed | upbeat
+Genre            | R&B-ish | Latin and pop
+Mode             | minor   | major
+
+
+
+
+```{r track comparison, eval=FALSE}
+# Mr Eazi:      7IgVM0GW96uXhM5XUeYgH9    ééntonig
+# Hey Mama:     285HeuLxsngjFn4GGegGNm    duidelijke verse-chorus structuur
+# Sweetie Odo:  2UAl2nzSixQviGw0XJvJgY    mooie self-similarity matrices
+# Cash:         0URAjyKMW6cGfW6oFMTh6k    
+```
 
 <!-- Data visualization: -->
 <!-- - https://rkabacoff.github.io/datavis/Time.html#dummbbell-charts -->
