@@ -92,23 +92,23 @@ corpus_stats <- corpus %>%
 Prologue
 ==================
 
-### Just an average girl?
+Row
+-------------------------------------
+
+### <font size="3"> Just an average girl? </font>
 
 My initial corpus consisted of my Top Tracks of 2019 and 2020 and the Top Tracks NL of 2019 and 2020. I wanted to analyze how 'average' my taste in music was, and how it changed during the COVID-19 pandemic. Due to the **social distancing measures** I did not listen to music in any social setting, such as hanging out with friends, clubbing, or even working out at the gym.
 
 After seven weeks of homework assignments, disappointing results and hence disappointing data visualizations, I decided to change my corpus. The Top Tracks NL playlists were too 'general' to really capture any meaning or essence of 'the average Dutch taste in music'.
 
-### A clean slate
-
 My new corpus consists of 510 tracks from 7 playlists in total. I still use my Top Tracks of 2019 and 2020, but I have added my own 2021 playlist. This way, 2019 represents the pre-pandemic situation and 2021 represent the one-year mark. The other four playlists are playlists of the NL top tracks of 2020, but one for each of the following genres: pop, dance, hip-hop/R&B and indie/rock. These genre playlists are shown below.
 
-<iframe src="https://open.spotify.com/embed/playlist/37i9dQZF1DX6gRTxU4AfAv" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
-<iframe src="https://open.spotify.com/embed/playlist/37i9dQZF1DX0W5G2DBOR2F" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
-<iframe src="https://open.spotify.com/embed/playlist/37i9dQZF1DX6rJpshxuzGT" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
-<iframe src="https://open.spotify.com/embed/playlist/37i9dQZF1DWYeyJxik6dE1" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+### <font size="3"> A clean slate </font>
 
-With this clean slate, I want to analyze the following:
+I want to analyze the following about this new corpus:
+
 **1. In terms of genre, how can my taste in music best be described?**
+
 **2. How has my taste in music evolved during the COVID-19 pandemic?**
 
 It is important to note that the playlists do not contain the same amount of tracks. The four genre playlists each contain 50 tracks. My 2019 and 2020 playlists contain 100 tracks and my 2021 playlist contains 110 tracks. I deciced not to take out the extra 10, because there was no satisfactory objective way of doing so.
@@ -119,20 +119,28 @@ More plausible is the possibility of my personal Top Tracks playlists being bias
 
 A great example of a dubious song is **"Stuck with U" by Ariana Grande and Justin Bieber**. It is one of my Top Tracks of 2020. It used to be in a lot of different playlists I listened to at the time. And yes, I liked that song, but nevertheless, I am fairly sure there were other songs I liked more in 2020. I definitely consider this song atypical for my taste in music in 2020.
 
-<iframe src="https://open.spotify.com/embed/track/4HBZA5flZLE435QTztThqH" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+<iframe src="https://open.spotify.com/embed/track/4HBZA5flZLE435QTztThqH" width="300" height="80" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
 
 Contrarily, a song I consider very typical for my taste is **"Drive and Disconnect" by Nao**. I remember listening to this song on repeat when I discovered it early 2019, but also for a longer time after that. And even a few months later I rediscovered this song, and fell in love all over again. Even now, it is still one of my favorite songs.
 
-<iframe src="https://open.spotify.com/embed/track/6pEAd0UjznaKABT7WLLvmC" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+<iframe src="https://open.spotify.com/embed/track/6pEAd0UjznaKABT7WLLvmC" width="300" height="80" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
 
+Row
+-------------------------------------
+
+### Genre playlists
+<iframe src="https://open.spotify.com/embed/playlist/37i9dQZF1DX6gRTxU4AfAv" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+<iframe src="https://open.spotify.com/embed/playlist/37i9dQZF1DX6rJpshxuzGT" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+<iframe src="https://open.spotify.com/embed/playlist/37i9dQZF1DX0W5G2DBOR2F" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+<iframe src="https://open.spotify.com/embed/playlist/37i9dQZF1DWYeyJxik6dE1" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
 
 
 A good first impression {.storyboard}
 ==================
 
-### <font size="4"> An emotional analysis of the lockdown: (no) time to relax </font>
+### <font size="3"> An emotional analysis of the lockdown: (no) time to relax </font>
 
-```{r mood plot, fig.align="center"}
+```{r mood plot, fig.align="center", out.height="90%"}
 ggplotly(ggplot(
     corpus,
     aes(x = valence,
@@ -162,26 +170,31 @@ ggplotly(ggplot(
   scale_y_continuous(breaks=seq(0,1,0.25)) +
   facet_wrap(~playlist) +
   labs(x = "Valence",
-       y = "Energy",
-       title = "Scatter plot of energy versus valence",
-       subtitle = "with mean and SD per playlist") +
+       y = "\nEnergy\n") +
   theme_mine,
-  width = 800
-)
+  )
 ```
 
 ***
-Here comes the analysis
+<font size="4"> Scatter plot of energy versus valence with mean and SD per playlist </font>
+
+*The means are represented by the bigger dots, the SDs by the line segments.*
+
+Overall, I am really not surprised by the results of this energy-valence scatter plot. It is pretty much what I expected  about these features. At frist, I was surprised that my playlists are so diverse. Later, I realized that I indeed listen to all kinds of emotion in music.
+
+My personal playlists seem to resemble each other the most. Their means, as well as their scattering, are most similar to the pop genre The shape of the 2021 scattering, however, seems to have slightly shifted toward hip-hop/R&B. I already suspected it would, because I have been discovering some nice new R&B artists lately.
+
+The genres dance and indie/rock look least like my playlist, which also makes sense, since I don't listen to that much. It is very interesting to see that indie/rock is so all over the place. I am not a real indie-expert, so I would not know if this was to be expected. I *did* expect rock to have some tracks in the upper-left corner, which it does indeed. What is so interesting about dance, is that the tracks lie very close to each other in the spectrum. With electronic instrumentation, it makes sense that the energy of dance tracks is overall high.
 
 
-### **knaldrag** [knal-drang] *noun* -- The intense desire to go out, to party, to dance.
+### <font size="3"> [**knaldrang**](https://www.urbandictionary.com/define.php?term=knaldrang) [knal-drang] *noun* -- The intense desire to go out, to party, to dance. </font>
 
-```{r dance plot, fig.align="center"}
+```{r dance plot, fig.align="center", out.width="80%"}
 ggplotly(ggplot(
     corpus,
     aes(x = tempo,
         y = danceability,
-        color = tempo * danceability,
+        color = (tempo * danceability)^0.7,
         label = track.name)) +
   geom_point(alpha = 0.5) +
   scale_color_viridis(guide = "none", option = "inferno") +
@@ -206,41 +219,43 @@ ggplotly(ggplot(
   # scale_y_continuous(breaks=seq(0,1,0.25)) +
   facet_wrap(~playlist) +
   labs(x = "Tempo (bpm)",
-       y = "Danceability",
-       title = "Scatter plot of danceability versus tempo",
-       subtitle = "with mean and SD per playlist") +
-  theme_mine,
-  width = 800
+       y = "Danceability") +
+  theme_mine
 )
 ```
 
 ***
-My playlists all seem to have a cluster around 100 bpm. The same holds for the genres hip-hop/R&B and pop. (Notice that all of their means are slightly higher, since they spread out more to the right.) Indie/rock is clustered more around 120 bpm, and dance even more so.
+<font size="4"> Scatter plot of danceability versus tempo with mean and SD per playlist </font>
+*The means are represented by the bigger dots, the SDs by the line segments.*
 
-The average danceabilities of my playlists lie between 0.6 and 0.9. The means, of about 0.7 confirm this. Dance tracks from about 0.5 to 0.9, also with a mean of 0.7. Not surprisingly, pop and indie/rock tracks have a somewhat lower danceability. Hip-hop/R&B tracks, however, have a slightly higher danceability.
+What strikes me the most, is that the tracks in my personal playlists all cluster around 100 bpm. When I saw this visualization, I immediately wanted to check it. And indeed, at 100 bpm, my body seems to start moving to the music effortlessly. So unlike what [Moelants (2002)](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.465.8019&rep=rep1&type=pdf) showed, my preferred tempo *does* lie at 100 bpm.
+
+Just like my playlists, the genres hip-hop/R&B and pop also seem to have a cluster of tracks around 100 bpm, although less obvious. Notice that all of their means are slightly higher, since they spread out more to the right. Indie/rock is clustered more around 120 bpm, and dance even more so.
+
+The average danceabilities of my playlists lie between 0.6 and 0.9. The means, of about 0.7 confirm this. Dance tracks are spread out from about 0.5 to 0.9, also with a mean of 0.7. Not surprisingly, pop and indie/rock tracks have a somewhat lower danceability. Hip-hop/R&B tracks, however, have a slightly higher danceability.
+
+In conclusion, regarding tempo and danceability, my taste in music can be characterized by the genres pop and hip-hop/R&B. Also, I have gotten very curious what exactly determines danceability for the Spotify API, since it does not *necessarily* take tempo into account.
 
 
-### It's in the minor details of this major pandemic
+### <font size="3"> It's in the minor details of this major pandemic </font>
 
-```{r mode barplot, fig.align="center"}
+```{r mode barplot, fig.align="center", out.width="60%"}
 ggplotly(ggplot(
   corpus,
   aes(x = playlist,
       fill = mode_name)) +
   geom_bar(position = "fill", alpha = 0.75) +
 
+  scale_x_discrete(limits = c("2019","2020","2021","","Hip-Hop/R&B","Dance","Indie/Rock","Pop")) +
   scale_y_continuous(labels = scales::percent) +
   labs(x = NULL, y = NULL, title = "Distribution of modes across playlists") +
   theme_mine +
   theme(panel.grid.major.x = element_blank()),
-  width = 800
 )
 ```
 
 ***
-My Top Tracks playlists clearly count more minor modes (64%) than the NL Top Tracks playlists (49%). Also, there is a slight increase in minor tracks in 2020 as opposed to 2019.
-
-It is immediately apparent that the indie/rock and pop playlists contain relatively more major than minor tracks, as opposed to the other playlists. Also, my 2021 tracks are more likely to be in minor mode than my Top Tracks of 2019 or 2020. As in the energy-valence visualization, this might indicate that my taste in music has slightly shifted towards R&B.
+It is immediately apparent that the indie/rock and pop playlists contain relatively more major than minor tracks, as opposed to the other playlists. Also, my 2021 tracks are more likely to be in minor mode than my Top Tracks of 2019 or 2020. As in the energy-valence visualization, this might indicate that my taste in music has slightly shifted towards R&B. As opposed to previous results, this barplot shows that, regarding mode, my taste in music can be *least* characterized by pop.  
 
 
 
@@ -274,9 +289,11 @@ sweetie_sec <-
     segments, compmus_summarise, timbre,
     method = "rms", norm = "euclidean"               # Change summary & norm.
     ))
+
+arrow1 <- arrow(length = unit(0.1, "cm"), ends = "both", type = "closed")
 ```
 
-### Repetitive chord progressions and vocal 'blocks' {data-commentary-width=300}
+### <font size="3"> A chroma analysis: repetitive chord progressions and clear verse-chorus structures by melody and harmony </font> {data-commentary-width=450}
 
 ```{r chromagrams bars and sections}
 bind_rows(
@@ -291,6 +308,18 @@ bind_rows(
         y = pitch_class,
         fill = value)) +
   geom_tile() +
+  
+  annotate("text", x = 14, y = 9.1, label = "guitar", color = "white") +
+  annotate("segment", x = 0, xend = 8, y = 8.5, yend = 8.5, color = "white", arrow=arrow1) +
+  annotate("text", x = 25, y = 7, label = "percussion", color = "white") +
+  annotate("segment", x = 9, xend = 20, y = 6.5, yend = 6.5, color = "white", arrow=arrow1) +
+  annotate("text", x = 50, y = 4, label = "chorus", color = "white") +
+  annotate("segment", x = 39, xend = 58, y = 3.5, yend = 3.5, color = "white", arrow=arrow1) +
+  annotate("text", x = 110, y = 2, label = "bridge", color = "white") +
+  annotate("segment", x = 102, xend = 115, y = 1.5, yend = 1.5, color = "white", arrow=arrow1) +
+  annotate("text", x = 126, y = 4, label = "chorus", color = "white") +
+  annotate("segment", x = 116, xend = 136, y = 3.5, yend = 3.5, color = "white", arrow=arrow1) +
+  
   scale_x_continuous(breaks=seq(0,155,30)) +
   scale_fill_viridis_c("Magnitude", option = "inferno") +
   facet_wrap(~type) +
@@ -307,22 +336,35 @@ bind_rows(
 ***
 <iframe src="https://open.spotify.com/embed/track/2UAl2nzSixQviGw0XJvJgY" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
 
-This song was a typical Top Track of mine in 2020 (see song info). In the bars chromagram, you can clearly see the repetitive chord progression throughout the song -- the skips from C to A to G. The sections chromagram clearly shows bright 'blocks' at D and C. The D-blocks represent the chorus vocals and the C-block represents the vocals in the bridge. The first few blocks at G, F and D represent the intro.
+This song was one of my favorite tracks of 2020 and a pretty typical as well (see song info). In the bars chromagram, you can clearly see the repetitive chord progression throughout the song -- e.g. the skips from C to G. The sections chromagram clearly shows bright 'blocks' at D and C. The D-blocks represent the chorus vocals and the C-block represents the vocals in the bridge. The first few blocks at G and F represent the instrumental intro.
 
-I think the overall look of these chromagrams are very representative of the tracks I generally listen to. Speaking from a music theoretic point of view, most songs have a standard verse-chorus structure (as shown by the the sections chromagram) and simple melodies and harmonies (as shown by the bars chromagram).
+I think the overall look of these chromagrams are very representative of the tracks I generally listen to. Speaking from a music theoretic point of view, most songs have a clear verse-chorus structure (as shown by the the sections chromagram) and simple melodies and harmonies (as shown by the bars chromagram). However, the verse-chorus structure of this song is much *different* than the usual "verse-chorus-verse-chorus-bridge-chorus" from pop songs (see song structure).
 
-##### Song info
+#### Song info
 Feature        | Average in 2020                         | "Sweetie Odo" 
 ---------------|-----------------------------------------|--------------
+Key            | F# major                                | G minor
 Time Signature | `r median(my2020$time_signature)`       | 4
 BPM            | `r round(mean(my2020$tempo), 2)`        | 100
 Energy         | `r round(mean(my2020$energy), 2)`       | 0.49
 Valence        | `r round(mean(my2020$valence), 2)`      | 0.53
 Danceability   | `r round(mean(my2020$danceability), 2)` | 0.84
 
+#### Song structure
+Time (s) | Section             | Instrumentation
+-------- | ------------------- | ----------
+0-9      | intro               | guitar
+10-19    | intro               | + percussion
+19-38    | intro               | + voice
+38-57    | chorus              |
+57-76    | post-chorus         |
+76-96    | verse               |
+96-114   | bridge              |
+114-134  | chorus              |
+134-155  | outro / post-chorus | - guitar
 
 
-### Different sounds in different sections {data-commentary-width=300}
+### <font size="3"> A timbre analysis: clear verse-chorus structures by instrumentation </font> {data-commentary-width=450}
 ```{r cepstrograms bars and sections}
 bind_rows(
   sweetie %>% 
@@ -336,6 +378,20 @@ bind_rows(
         y = basis,
         fill = value)) +
   geom_tile() +
+  
+  annotate("text", x = 20, y = 4, label = "intro", color = "white") +
+  annotate("segment", x = 0, xend = 38, y = 3.5, yend = 3.5, color = "white", arrow=arrow1) +
+  annotate("text", x = 69, y = 6, label = "post-chorus", color = "white") +
+  annotate("segment", x = 59, xend = 78, y = 5.5, yend = 5.5, color = "white", arrow=arrow1) +
+  annotate("text", x = 90, y = 4, label = "verse", color = "white") +
+  annotate("segment", x = 78, xend = 100, y = 3.5, yend = 3.5, color = "white", arrow=arrow1) +
+  annotate("text", x = 110, y = 1.1, label = "bridge", color = "white") +
+  annotate("segment", x = 102, xend = 115, y = 1.5, yend = 1.5, color = "white", arrow=arrow1) +
+  annotate("text", x = 126, y = 6, label = "chorus", color = "white") +
+  annotate("segment", x = 116, xend = 136, y = 5.5, yend = 5.5, color = "white", arrow=arrow1) +
+  annotate("text", x = 144, y = 4, label = "outro", color = "white") +
+  annotate("segment", x = 137, xend = 156, y = 3.5, yend = 3.5, color = "white", arrow=arrow1) +
+  
   scale_x_continuous(breaks=seq(0,155,30)) +
   scale_fill_viridis_c("Magnitude", option = "inferno") +
   facet_wrap(~type) +
@@ -352,11 +408,11 @@ bind_rows(
 ***
 <iframe src="https://open.spotify.com/embed/track/2UAl2nzSixQviGw0XJvJgY" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
 
-This song was a typical Top Track of mine in 2020 (see song info). Both cepstrograms clearly show the intro and outro in the third timbre component. The verses are also brighter in c03. The chorus sections, however, light up in c05. I wonder what this component represents. The second timbre component most clearly shows the bridge and the choruses somewhat.
+This song was one of my favorite tracks of 2020 and a pretty typical as well (see song info). Both cepstrograms clearly show the intro and outro in the third timbre component. The verses is also brighter in c03. The chorus sections, however, light up in c05. I wonder what this component represents. The second timbre component most clearly shows the bridge and the choruses somewhat.
 
 What is most representative about this song, and clearly visualized in these cepstrograms, is that most songs I listen to have an intro and outro. Also, I believe I do not listen to many songs where the loudness -- the first timbre component -- changes a lot.
 
-##### Song info
+#### Song info
 Feature        | Average in 2020                         | "Sweetie Odo" 
 ---------------|-----------------------------------------|--------------
 Time Signature | `r median(my2020$time_signature)`       | 4
@@ -365,34 +421,59 @@ Energy         | `r round(mean(my2020$energy), 2)`       | 0.49
 Valence        | `r round(mean(my2020$valence), 2)`      | 0.53
 Danceability   | `r round(mean(my2020$danceability), 2)` | 0.84
 
+#### Song structure
+Time (s) | Section             | Instrumentation
+-------- | ------------------- | ----------
+0-9      | intro               | guitar
+10-19    | intro               | + percussion
+19-38    | intro               | + voice
+38-57    | chorus              |
+57-76    | post-chorus         |
+76-96    | verse               |
+96-114   | bridge              |
+114-134  | chorus              |
+134-155  | outro / post-chorus | - guitar
 
 
-### Self-similarity matrices
+### <font size="3"> The song that just keeps on giving </font> {data-commentary-width=450}
 ```{r self-similarity matrices}
 bind_rows(
   sweetie %>%
-    compmus_self_similarity(pitches, "aitchison") %>%
+    compmus_self_similarity(pitches, "euclidean") %>%
     mutate(d = d / max(d), type = "Chroma"),
   sweetie %>%
     compmus_self_similarity(timbre, "euclidean") %>%
     mutate(d = d / max(d), type = "Timbre")
 ) %>%
   mutate() %>%
-  ggplot(
-    aes(
-      x = xstart + xduration / 2,
-      width = xduration,
-      y = ystart + yduration / 2,
-      height = yduration,
-      fill = d
-    )
-  ) +
+  ggplot(aes(
+    x = xstart + xduration / 2,
+    width = xduration,
+    y = ystart + yduration / 2,
+    height = yduration,
+    fill = d)) +
   scale_x_continuous(breaks=seq(0,155,30)) +
   scale_y_continuous(breaks=seq(0,155,30)) +
   geom_tile() +
   coord_fixed() +
+  
+  annotate("text", x = 19, y = 42, label = "intro", color = "white") +
+  annotate("segment", x = 2, xend = 38, y = 38, yend = 38, color = "white", arrow=arrow1) +
+  annotate("text", x = 48, y = 62, label = "chorus", color = "white") +
+  annotate("segment", x = 39, xend = 57, y = 57, yend = 57, color = "white", arrow=arrow1) +
+  annotate("text", x = 67, y = 53, label = "post-", color = "white") +
+  annotate("segment", x = 57, xend = 76, y = 57, yend = 57, color = "white", arrow=arrow1) +
+  annotate("text", x = 86, y = 101, label = "verse", color = "white") +
+  annotate("segment", x = 77, xend = 96, y = 96, yend = 96, color = "white", arrow=arrow1) +
+  annotate("text", x = 105, y = 120, label = "bridge", color = "white") +
+  annotate("segment", x = 97, xend = 113, y = 114, yend = 114, color = "white", arrow=arrow1) +
+  annotate("text", x = 124, y = 110, label = "chorus", color = "white") +
+  annotate("segment", x = 114, xend = 134, y = 114, yend = 114, color = "white", arrow=arrow1) +
+  annotate("text", x = 144, y = 130, label = "outro", color = "white") +
+  annotate("segment", x = 134, xend = 153, y = 134, yend = 134, color = "white", arrow=arrow1) +
+  
   facet_wrap(~type) +
-  scale_fill_viridis_c(guide = "none", option = "inferno") +
+  scale_fill_viridis_c(end = .9, guide = "none", option = "inferno") +
   labs(x = NULL, y = NULL,
        title = "Self-similarity matrices for chroma and timbre",
        subtitle = "'Sweetie Odo' by Juls featuring Sway Clarke") +
@@ -403,35 +484,32 @@ bind_rows(
 ***
 <iframe src="https://open.spotify.com/embed/track/2UAl2nzSixQviGw0XJvJgY" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
 
-The song has the following structure:
+Because this song produced remarkably nice self-similarity matrices, I decided to analyze it once more, but now focusing on homogeneity rather than the specific chroma and timbre features.
 
-Time (s) | Section     | Instrumentation
--------- | ----------- | ----------
-0-9      | intro       | guitar
-10-19    | intro       | + percussion
-19-38    | intro       | + voice
-38-57    | chorus      |
-57-76    | post-chorus |
-76-96    | verse       |
-96-114   | bridge      |
-114-134  | chorus      |
-134-155  | post-chorus | - guitar
+Both matrices clearly show (parts of) the song's structure (see below). The chroma matrix clearly shows the instrumental intro (first strip), the vocal intro, verse and outro (light strips), and the choruses with bridge (dark squares). It makes sense that both choruses are similar in pitch. Interestingly, the bridge resembles them. I could not figure out why, not by ear at least. Also interesting to see is that the second post-chorus is not similar to the first post-chorus. When you listen to the song, however, it *does* make a lot of sense; in the outro, the guitar stops playing.
 
-Both matrices clearly show (parts of) the song's structure. The chroma matrix clearly shows the instrumental intro (first strip), the vocal intro, outro and verse (light strips), and the choruses with bridge (dark squares). It makes sense that both choruses are similar in pitch. Interestingly, the bridge resembles them. 
+The timbre matrix also clearly shows the outro, for the same reason actually. Timbre is partly determined by instrumentation, so it makes sense that the outro (without guitar) resembles no other part of the song (with guitar). Also notable is the dark square at the bottom-left corner of the timbre matrix. This represents the percussion coming in. In general, all squares in the timbre matrix can be ascribed to the homogeneity of the percussion. A new square indicates a change or short pause in the percussion -- even the slight changes just before 60 and 120 seconds represent a short percussion break of about a bar.
 
-Also interesting to see is that the second post-chorus is not similar to the first post-chorus. When you listen to the song, however, it *does* make a lot of sense; in the outro, the guitar stops playing.
+Also interesting, the vocal intro and the verse do not seem similar in pitch, yet they have the same repetitions (riffs probably). They are, overall, more similar in timbre. The bridge and choruses seem less similar in timbre than in pitch.
 
-The timbre matrix also clearly shows the outro, for the same reason actually. Timbre is partly determined by instrumentation, so it makes sense that the outro (without guitar) resembles no other part of the song (with guitar).
-
-Notable is the dark square at the bottom-left corner of the timbre matrix. This represents the percussion coming in. In general, all squares in the timbre matrix can be ascribed to the homogeneity of the percussion. A new square indicates a change or short pause in the percussion -- even the slight changes just before 60 and 120 seconds represent a short percussion break of about a bar.
-
-Also interesting, the vocal intro and the verse do not seem to be similar in pitch, but they do in timbre. The bridge and choruses, however, seem less similar in timbre than in pitch.
+#### Song structure
+Time (s) | Section             | Instrumentation
+-------- | ------------------- | ----------
+0-9      | intro               | guitar
+10-19    | intro               | + percussion
+19-38    | intro               | + voice
+38-57    | chorus              |
+57-76    | post-chorus         |
+76-96    | verse               |
+96-114   | bridge              |
+114-134  | chorus              |
+134-155  | outro / post-chorus | - guitar
 
 
 
-### Achordingly, repetition is key
+<!-- ### <font size="3"> Achordingly, repetition is key </font> {data-commentary-width=500} -->
 
-```{r chord and key templates}
+```{r chord and key templates, eval=FALSE}
 circshift <- function(v, n) {
   if (n == 0) v else c(tail(v, n), head(v, -n))
 }
@@ -519,7 +597,7 @@ key_templates <-
   )
 ```
 
-```{r chordogram setup}
+```{r chordogram setup, eval=FALSE}
 cash <-
   get_tidy_audio_analysis("0URAjyKMW6cGfW6oFMTh6k") %>%
   compmus_align(bars, segments) %>%
@@ -547,7 +625,7 @@ loop_niet_weg <-
   )
 ```
 
-```{r chordogram}
+```{r chordogram, eval=FALSE}
 cash %>% 
   compmus_match_pitch_template(
     chord_templates,         # Change to chord_templates if descired
@@ -581,15 +659,15 @@ loop_niet_weg %>%
   labs(x = "Time (s)", y = NULL, title = "Loop niet weg - Kris Kross Amsterdam")
 ```
 
-***
-Both songs have a very tropical vibe. It's interesting to see that, assuming the chordogram is correct, both songs seem to use the same few chords throughout the whole song. Whereas "Cash" seems to hold the same chord for a few bars, "Loop niet weg" alternates between chords and then repeats that pattern.
+<!-- *** -->
+<!-- Both songs have a very tropical vibe. It's interesting to see that, assuming the chordogram is correct, both songs seem to use the same few chords throughout the whole song. Whereas "Cash" seems to hold the same chord for a few bars, "Loop niet weg" alternates between chords and then repeats that pattern. -->
 
 
 
-### The final chapter: ~~vaccination~~ classification
+### <font size="3"> The final chapter: ~~vaccination~~ classification </font>
 <!-- The final judgment -->
 
-```{r classifier setup, eval=FALSE}
+```{r classifier setup}
 get_conf_mat <- function(fit) {
   outcome <- .get_tune_outcome_names(fit)
   fit %>% 
@@ -630,7 +708,7 @@ personal_features <-
   unnest(cols = c(pitches, timbre))
 ```
 
-``` {r classifier recipe, eval=FALSE}
+``` {r classifier recipe}
 personal_recipe_all <-
   recipe(
     playlist ~
@@ -654,23 +732,22 @@ personal_recipe_all <-
   step_center(all_predictors()) %>%
   step_scale(all_predictors())      # Converts to z-scores.
 
-personal_recipe_top <-
-  recipe(
-    playlist ~
-      energy + tempo + duration + speechiness + 
-      c01 + c02,
-    data = personal_features,
-  ) %>%
-  step_center(all_predictors()) %>%
-  step_scale(all_predictors())      # Converts to z-scores.
+# personal_recipe_top <-
+#   recipe(
+#     playlist ~
+#       energy + tempo + duration + speechiness + 
+#       c01 + c02,
+#     data = personal_features,
+#   ) %>%
+#   step_center(all_predictors()) %>%
+#   step_scale(all_predictors())      # Converts to z-scores.
 
 personal_cv <- personal_features %>% vfold_cv(5)
 ```
 
-#### k-nearest neighbor
-```{r k-Nearest Neighbor, eval=FALSE}
+```{r k-Nearest Neighbor}
 knn_model <-
-  nearest_neighbor(neighbors = 1) %>%
+  nearest_neighbor(neighbors = 2) %>%
   set_mode("classification") %>% 
   set_engine("kknn")
 personal_knn <- 
@@ -681,24 +758,29 @@ personal_knn <-
     personal_cv, 
     control = control_resamples(save_pred = TRUE)
   )
-personal_knn %>% get_conf_mat() %>% autoplot(type = "mosaic")
 personal_knn %>% get_conf_mat() %>% 
   autoplot(type = "heatmap") + 
-  labs(subtitle = "Confusion matrix for all features \nwith a k-nearest neighbor classifier") +
+  labs(subtitle = "Confusion matrix for all features with a k-nearest neighbor classifier") +
   scale_fill_viridis_c(begin = 0.3, direction = -1, guide = "none", option = "inferno") +
   theme_mine +
   theme(panel.grid = element_blank(), 
         panel.border = element_blank(),
         axis.ticks = element_blank())
+```
 
+***
+```{r knn precision}
 knitr::kable(personal_knn %>% get_pr(), 
              format = "html", 
              table.attr = "style='width:30%;'")
 ```
 
-As can be seen in the confusion matrix above, the k-nearest neighbor classifier performs badly. However disappointing, this result is not surprising. Just as we have seen no big differences between the four playlists overall, it makes sense that nearest neighbors might not be from the 'correct' playlist.
+On the left, you see a confusion matrix of a $k$-nearest neighbor classifier trying to classify my three personal playlists. As you can see, it performs rather okay on tracks from 2019 and 2021, yet very bad on tracks from 2020 (also see precision and recall in the table above). This could mean that my taste in music has shifted over the course of these three years and tracks from 2020 fall right in the middle. As a result, the classifier can only distinguish two classes and does not know what to do with 2020 tracks. This 'shift' from 2019 and 2021 has not been as clear in previous visualizations, where usually only 2021 showed a small difference from the other two.
 
-#### Random forest
+The $k$-nearest neighbor classifier uses $k=1$. I have tried several values of $k$, but none produced significantly better results. Also, the random forest classifier performed significantly worse than this classifier. It could not at all predict the classes of 2019 and 2020 -- the prediction for both was about 33 tracks in each class. It did, however, perform better on the 2021 class. Maybe the random forest classifier was more heavily influenced by my 2021 playlist containing 110 tracks, as opposed to the 100 tracks in my 2019 and 2020 playlists. This makes sense when comparing it to the $k$-nearest neighbor classifier, because that one only considers the $k$-nearest neighbors and does not take 'the whole' into account.
+
+
+<!-- #### Random forest -->
 ```{r random forest, eval=FALSE}
 forest_model <-
   rand_forest() %>%
@@ -748,7 +830,7 @@ knitr::kable(personal_forest_top %>% get_pr(),
              table.attr = "style='width:30%;'")
 ```
 
-The random forest classifiers perform much better. However, they are still not satisfactory and their results might even be considered insignificant. The second random forest classifier does seem to perform *somewhat* better than the first. The second only considers the following features: tempo, A, and all timbre features except c01 and c04. The plot below shows that these selected features indeed are more important than others.
+<!-- The random forest classifiers perform much better. However, they are still not satisfactory and their results might even be considered insignificant. The second random forest classifier does seem to perform *somewhat* better than the first. The second only considers the following features: tempo, A, and all timbre features except c01 and c04. The plot below shows that these selected features indeed are more important than others. -->
 
 ```{r feature importance, eval=FALSE}
 workflow() %>% 
@@ -773,17 +855,18 @@ workflow() %>%
 
 
 
-
 Epilogue
 ==================
 
-### 1. In terms of genre, how can my taste in music best be described?
+### <font size="3"> 1. In terms of genre, how can my taste in music best be described? </font>
+In most visualizations we saw a clear similarity between my personal playlists and the genres pop and R&B. My 2021 playlist usually shifted a little more towards R&B.
 
-### 2. How has my taste in music evolved during the COVID-19 pandemic?
+### <font size="3"> 2. How has my taste in music evolved during the COVID-19 pandemic? </font>
+As the results have shown, I have started listening to more R&B songs in 2021. Also 2021 tracks were more often in minor than tracks from 2019 and 2020. Also according to the $k$-nearest neighbor classifier, my music taste has indeed shifted since 2019. It shows that tracks from 2020 were hard to classify, probably because 2019 and 2021 were so clearly different from each other.
+### <font size="3"> Outlook </font>
+This corpus research has actually been for personal interest only. It might be nice to analyze music trends over the COVID-19 pandemic in general, but my corpus would in no way suffice for that analysis.
 
-### Outlook
-I have started listening to more Dutch music.
-Whether I have seasonal preferences. I can imagine the following seasonal pattern:
+Recently, I have started listening to more Dutch music. I wonder whether, in the future, I can research such 'language trends' as well. I have also started wondering whether I have seasonal preferences. I could imagine the following seasonal pattern:
 
 Time of the year | Winter  | Summer
 ---------------- | ------- | -------------
