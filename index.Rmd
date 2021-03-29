@@ -128,7 +128,7 @@ Contrarily, a song I consider very typical for my taste is **"Drive and Disconne
 Row
 -------------------------------------
 
-### Genre playlists
+### <font size="3"> Genre playlists </font>
 <iframe src="https://open.spotify.com/embed/playlist/37i9dQZF1DX6gRTxU4AfAv" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
 <iframe src="https://open.spotify.com/embed/playlist/37i9dQZF1DX6rJpshxuzGT" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
 <iframe src="https://open.spotify.com/embed/playlist/37i9dQZF1DX0W5G2DBOR2F" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
@@ -138,7 +138,7 @@ Row
 A good first impression {.storyboard}
 ==================
 
-### <font size="3"> An emotional analysis of the lockdown: (no) time to relax </font>
+### <font size="3"> An emotional analysis of the lockdown: (no) time to relax </font> {data-commentary-width=450}
 
 ```{r mood plot, fig.align="center", out.height="90%"}
 ggplotly(ggplot(
@@ -187,7 +187,7 @@ My personal playlists seem to resemble each other the most. Their means, as well
 The genres dance and indie/rock look least like my playlist, which also makes sense, since I don't listen to that much. It is very interesting to see that indie/rock is so all over the place. I am not a real indie-expert, so I would not know if this was to be expected. I *did* expect rock to have some tracks in the upper-left corner, which it does indeed. What is so interesting about dance, is that the tracks lie very close to each other in the spectrum. With electronic instrumentation, it makes sense that the energy of dance tracks is overall high.
 
 
-### <font size="3"> [**knaldrang**](https://www.urbandictionary.com/define.php?term=knaldrang) [knal-drang] *noun* -- The intense desire to go out, to party, to dance. </font>
+### <font size="3"> [**knaldrang**](https://www.urbandictionary.com/define.php?term=knaldrang) [knal-drang] *noun* -- The intense desire to go out, to party, to dance. </font> {data-commentary-width=450}
 
 ```{r dance plot, fig.align="center", out.width="80%"}
 ggplotly(ggplot(
@@ -237,7 +237,7 @@ The average danceabilities of my playlists lie between 0.6 and 0.9. The means, o
 In conclusion, regarding tempo and danceability, my taste in music can be characterized by the genres pop and hip-hop/R&B. Also, I have gotten very curious what exactly determines danceability for the Spotify API, since it does not *necessarily* take tempo into account.
 
 
-### <font size="3"> It's in the minor details of this major pandemic </font>
+### <font size="3"> It's in the minor details of this major pandemic </font> {data-commentary-width=450}
 
 ```{r mode barplot, fig.align="center", out.width="60%"}
 ggplotly(ggplot(
@@ -334,7 +334,7 @@ bind_rows(
 ```
 
 ***
-<iframe src="https://open.spotify.com/embed/track/2UAl2nzSixQviGw0XJvJgY" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+<iframe src="https://open.spotify.com/embed/track/2UAl2nzSixQviGw0XJvJgY" width="300" height="80" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
 
 This song was one of my favorite tracks of 2020 and a pretty typical as well (see song info). In the bars chromagram, you can clearly see the repetitive chord progression throughout the song -- e.g. the skips from C to G. The sections chromagram clearly shows bright 'blocks' at D and C. The D-blocks represent the chorus vocals and the C-block represents the vocals in the bridge. The first few blocks at G and F represent the instrumental intro.
 
@@ -406,7 +406,7 @@ bind_rows(
 ```
 
 ***
-<iframe src="https://open.spotify.com/embed/track/2UAl2nzSixQviGw0XJvJgY" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+<iframe src="https://open.spotify.com/embed/track/2UAl2nzSixQviGw0XJvJgY" width="300" height="80" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
 
 This song was one of my favorite tracks of 2020 and a pretty typical as well (see song info). Both cepstrograms clearly show the intro and outro in the third timbre component. The verses is also brighter in c03. The chorus sections, however, light up in c05. I wonder what this component represents. The second timbre component most clearly shows the bridge and the choruses somewhat.
 
@@ -482,7 +482,7 @@ bind_rows(
 ```
 
 ***
-<iframe src="https://open.spotify.com/embed/track/2UAl2nzSixQviGw0XJvJgY" width="300" height="380" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+<iframe src="https://open.spotify.com/embed/track/2UAl2nzSixQviGw0XJvJgY" width="300" height="80" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
 
 Because this song produced remarkably nice self-similarity matrices, I decided to analyze it once more, but now focusing on homogeneity rather than the specific chroma and timbre features.
 
@@ -664,7 +664,7 @@ loop_niet_weg %>%
 
 
 
-### <font size="3"> The final chapter: ~~vaccination~~ classification </font>
+### <font size="3"> The final chapter: ~~vaccination~~ classification </font> {data-commentary-width=450}
 <!-- The final judgment -->
 
 ```{r classifier setup}
@@ -863,6 +863,7 @@ In most visualizations we saw a clear similarity between my personal playlists a
 
 ### <font size="3"> 2. How has my taste in music evolved during the COVID-19 pandemic? </font>
 As the results have shown, I have started listening to more R&B songs in 2021. Also 2021 tracks were more often in minor than tracks from 2019 and 2020. Also according to the $k$-nearest neighbor classifier, my music taste has indeed shifted since 2019. It shows that tracks from 2020 were hard to classify, probably because 2019 and 2021 were so clearly different from each other.
+
 ### <font size="3"> Outlook </font>
 This corpus research has actually been for personal interest only. It might be nice to analyze music trends over the COVID-19 pandemic in general, but my corpus would in no way suffice for that analysis.
 
